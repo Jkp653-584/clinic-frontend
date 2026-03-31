@@ -1,0 +1,102 @@
+.home-overlay {
+  width: 100%;
+  height: 877px;
+  background-image: url('/src/assets/bg-login.jpg');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: top center;
+  position: relative;
+}
+
+.home-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(2px);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.home-topbar {
+  position: relative;
+  z-index: 1;
+  height: 64px;
+  padding: 0 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+}
+
+.home-topbar h2 {
+  margin: 0;
+}
+
+.home-topbar button {
+  height: 40px;
+  padding: 0 24px;
+  background: #2563EB;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  border-radius: 10px;
+  font-size: 15px;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.home-topbar button:hover {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.home-content {
+  position: relative;
+  z-index: 1;
+  height: calc(877px - 64px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.home-inner {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  padding: 20px;
+  width: 100%;
+}
+
+.home-inner h1 {
+  margin: 0;
+  font-size: 48px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.home-description {
+  font-size: 20px;
+  color: #f3f4f6;
+  line-height: 1.7;
+}
+
+.home-cta {
+  margin-top: 12px;
+  height: 50px;
+  padding: 0 40px;
+  font-size: 16px;
+  font-weight: 500;
+  background: #2563EB;
+  color: #ffffff;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.home-cta:hover {
+  background: #0d6efd;
+  transform: translateY(-2px);
+}

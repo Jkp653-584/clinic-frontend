@@ -1,0 +1,211 @@
+.appointment-page {
+    padding: 32px;
+    font-family: sans-serif;
+}
+
+/* TITLE */
+
+.appointment-page h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #111;
+}
+
+.appointment-page p {
+    color: #6b7280;
+    margin-bottom: 20px;
+}
+
+/* FILTER */
+
+.appointment-filters {
+    display: flex;
+    gap: 0;
+    /* แก้ข้อ 1 */
+}
+
+.filter-btn {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 10px 10px 0 0;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+/* tab colors */
+
+.filter-all {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.filter-diagnosis {
+    background: #bfdbfe;
+    color: #1d4ed8;
+}
+
+.filter-treatment {
+    background: #bbf7d0;
+    color: #15803d;
+}
+
+.filter-waiting {
+    background: #fde68a;
+    color: #a16207;
+}
+
+.filter-completed {
+    background: #86efac;
+    color: #166534;
+}
+
+.filter-finished {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.filter-cancel {
+    background: #fecaca;
+    color: #b91c1c;
+}
+
+.filter-btn.active {
+    border: 2px solid #3b82f6;
+    border-bottom: 0;
+    z-index: 2;
+    position: relative;
+}
+
+/* TABLE */
+
+.appointment-table-wrapper {
+    border: 2px solid #3b82f6;
+    border-radius: 0 10px 10px 10px;
+    overflow: hidden;
+    /* ทำให้ tab ต่อกับ table smooth */
+}
+
+/* TABLE AREA */
+
+.appointment-table-area {
+    height: 375px;
+    /* header + 6 rows */
+}
+
+/* TABLE */
+
+.appointment-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+/* HEADER */
+
+.appointment-table th {
+    background: #d1d5db;
+    padding: 14px;
+    border-right: 2px solid #3b82f6;
+    border-bottom: 2px solid #3b82f6;
+    font-weight: 600;
+    color: #374151;
+    text-align: center;
+}
+
+/* ลบ border ซ้ายบน (ข้อ 2) */
+
+.appointment-table th:first-child {
+    border-left: none;
+}
+
+.appointment-table th:last-child {
+    border-right: none;
+}
+
+/* ROW */
+
+.appointment-table tbody tr {
+    height: 54px;
+    /* row height fix */
+}
+
+/* CELL */
+
+.appointment-table td {
+    padding: 12px;
+    border-right: 2px solid #3b82f6;
+    border-bottom: 2px solid #3b82f6;
+    /* แก้ข้อ 4 */
+    text-align: center;
+    color: #374151;
+}
+
+.appointment-table td:last-child {
+    border-right: none;
+}
+
+/* STATUS */
+
+.status {
+    font-weight: 500;
+}
+
+.status-diagnosis {
+    color: #2563eb;
+}
+
+.status-treatment {
+    color: #16a34a;
+}
+
+.status-waiting {
+    color: #d97706;
+}
+
+.status-completed {
+    color: #16a34a;
+}
+
+.status-finished {
+    color: #4b5563;
+}
+
+.status-cancel {
+    color: #dc2626;
+}
+
+/* ACTION */
+
+.action-cancel {
+    border: none;
+    background: none;
+    color: #dc2626;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+/* PAGINATION */
+
+.pagination {
+    margin-top: 18px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.page {
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 10px;
+    background: #e5e7eb;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.page.active {
+    background: #2563eb;
+    color: white;
+}

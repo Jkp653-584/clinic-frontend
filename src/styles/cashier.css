@@ -1,0 +1,68 @@
+/* cashier */
+.cashier-page {
+  padding: 24px;
+}
+
+.cashier-card {
+  border: 1px solid #d9d9d9;
+  border-radius: 14px;
+  padding: 20px;
+  background: #fff;
+}
+
+.cashier-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.cashier-page input,
+.cashier-page select,
+.cashier-page textarea {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
+
+.cashier-page textarea {
+  min-height: 100px;
+  resize: none;
+}
+
+.primary-btn {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.mt-16 {
+  margin-top: 16px;
+}
+
+.appointment-filter-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap; /* สำคัญมาก */
+  gap: 12px;
+}
+
+/* ซ้าย = status tabs */
+.appointment-filter-left {
+  display: flex;
+  align-items: center;
+  gap: 0px;
+  flex-wrap: nowrap;   /* 👈 ตัวสำคัญ ห้ามแตก */
+}
+
+/* ขวา = date + search */
+.appointment-filter-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}

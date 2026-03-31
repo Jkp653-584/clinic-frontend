@@ -1,0 +1,286 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.section-title {
+  font-size: 36px;
+  margin-bottom: 12px;
+}
+
+.section-sub {
+  color: #6b7280;
+  margin-bottom: 16px;
+}
+
+.section-desc {
+  color: #6b7280;
+  margin-bottom: 48px;
+}
+
+.features-section {
+  background: #f3f4f6;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+}
+
+.feature-card {
+  background: white;
+  padding: 32px 24px;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transition: transform 0.25s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-6px);
+}
+
+.workflow-section {
+  background: #ffffff;
+}
+
+.workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+  margin-top: 40px;
+}
+
+.settings-container{
+  max-width:700px;
+  margin:0;
+}
+
+.settings-title{
+  font-size:28px;
+  font-weight:600;
+  margin-bottom:30px;
+}
+
+.settings-section{
+  margin-bottom:30px;
+}
+
+.settings-section h2{
+  font-size:18px;
+  margin-bottom:16px;
+}
+
+/* notification */
+
+.notify-options{
+  display:flex;
+  gap:24px;
+  align-items:center;
+}
+
+.notify-options label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:15px;
+}
+
+/* reset button */
+
+.reset-btn{
+  background:#16a34a;
+  color:white;
+  border:none;
+  padding:10px 16px;
+  border-radius:10px;
+  cursor:pointer;
+  font-size:14px;
+}
+
+/* form */
+
+.form-group{
+  display:flex;
+  flex-direction:column;
+  margin-bottom:16px;
+}
+
+.form-group label{
+  font-size:14px;
+  margin-bottom:6px;
+}
+
+.form-group input{
+  padding:12px;
+  border-radius:12px;
+  border:1px solid #d1d5db;
+  font-size:14px;
+  width:100%;
+}
+
+/* button area */
+
+.button-row{
+  margin-top:20px;
+  display:flex;
+  gap:12px;
+}
+
+.edit-btn{
+  background:#2563eb;
+  color:white;
+  border:none;
+  padding:10px 18px;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+.save-btn{
+  background:#2563eb;
+  color:white;
+  border:none;
+  padding:10px 18px;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+.cancel-btn{
+  background:#dc2626;
+  color:white;
+  border:none;
+  padding:10px 18px;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+/* disabled input */
+
+input:disabled{
+  background:#f3f4f6;
+}
+.footer {
+  background: #0f172a;
+  color: white;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+/* 🔍 search */
+.search-box {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 12px 40px 12px 12px;
+  border-radius: 12px;
+  border: 1px solid red;
+}
+
+.search-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* 📋 list */
+.list-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border: 2px solid #3b82f6;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.list-item .id {
+  font-weight: bold;
+}
+
+.list-item .name {
+  flex: 1;
+  margin-left: 16px;
+}
+
+.list-item .arrow {
+  font-size: 18px;
+}
+
+/* 📅 calendar */
+.calendar-container {
+  max-width: 900px;
+}
+
+.calendar-header {
+  text-align: center;
+  margin: 20px 0;
+  font-weight: bold;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.day {
+  padding: 12px;
+  border-radius: 8px;
+  background: #e5e7eb;
+  text-align: center;
+  cursor: pointer;
+}
+
+.day.active {
+  background: #2563eb;
+  color: white;
+}
+
+.appointment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.appointment-item {
+  display: flex;
+  justify-content: space-between;
+  border: 2px solid #3b82f6;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.time {
+  color: #2563eb;
+  font-weight: bold;
+}
+
+.symptom {
+  color: #d97706;
+}
+
+.radio-group {
+  display: flex;
+  gap: 16px;
+  margin-top: 6px;
+}
+
+.radio-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}

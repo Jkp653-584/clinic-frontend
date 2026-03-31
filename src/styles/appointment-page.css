@@ -1,0 +1,78 @@
+.appointment-page{
+  max-width:900px;
+}
+
+.calendar-grid{
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  gap:10px;
+  margin-top:20px;
+}
+
+.calendar-day{
+  height:50px;
+  border-radius:12px;
+  border:1px solid #ddd;
+  background:white;
+  cursor:pointer;
+}
+
+.calendar-day.active{
+  background:#2f66d0;
+  color:white;
+}
+
+.calendar-day:disabled{
+  background:#eee;
+  color:#aaa;
+  cursor:not-allowed;
+}
+
+
+.time-grid{
+  display:grid;
+  grid-template-columns:repeat(4,100px);
+  gap:10px;
+  margin-top:20px;
+}
+
+.time-slot{
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  background:white;
+}
+
+.time-slot.active{
+  background:#2f66d0;
+  color:white;
+}
+
+.time-slot:disabled{
+  background:#eee;
+  color:#aaa;
+}
+
+
+.form-group{
+  margin-top:25px;
+  display:flex;
+  flex-direction:column;
+}
+
+textarea{
+  padding:12px;
+  border-radius:12px;
+  border:1px solid #ddd;
+  min-height:80px;
+}
+
+.confirm-btn{
+  margin-top:25px;
+  padding:14px 22px;
+  background:#2f66d0;
+  color:white;
+  border:none;
+  border-radius:12px;
+  font-size:16px;
+}

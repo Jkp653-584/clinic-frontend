@@ -1,0 +1,227 @@
+.global-loading {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(4px);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 9999;
+}
+
+.spinner {
+  width: 42px;
+  height: 42px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #0d6efd;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.section-header {
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 24px;
+  margin-bottom: 12px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+label {
+  font-size: 13px;
+  display: block;
+  margin-bottom: 6px;
+}
+
+input:not([type="radio"]) {
+  height: 44px;
+  font-size: 13px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  width: 100%;
+}
+
+textarea {
+  height: 80px;
+  font-size: 13px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  width: 100%;
+  resize: none;
+}
+
+input:disabled,
+textarea:disabled {
+  background: #f3f3f3;
+}
+
+.email-row {
+  display: flex;
+  gap: 10px;
+}
+
+.verify-btn {
+  height: 44px;
+  padding: 0 16px;
+  background: #1f9d63;
+  color: white;
+  border: none;
+  border-radius: 10px;
+}
+
+.radio-row {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  height: 44px;
+}
+
+.button-row {
+  margin-top: 30px;
+  display: flex;
+  gap: 20px;
+}
+
+.save-btn {
+  background: #2f5bd3;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 12px;
+}
+
+.cancel-btn {
+  background: #e02626;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 12px;
+}
+
+.edit-btn {
+  background: #2f5bd3;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.field-error {
+  font-size: 12px;
+  color: #ff4d4f;
+  margin-top: 4px;
+  margin-bottom: 0px;
+}
+
+input.error {
+  border-color: #ff4d4f;
+}
+
+/* =========================
+   TOAST CONTAINER
+========================= */
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  pointer-events: none;
+  /* 🔥 กัน block click */
+}
+
+/* =========================
+   TOAST BOX
+========================= */
+.toast {
+  pointer-events: auto;
+
+  min-width: 280px;
+  max-width: 380px;
+
+  padding: 16px 18px;
+  border-radius: 14px;
+
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+
+  color: #fff;
+
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  animation: slideUp 0.35s ease;
+}
+
+/* สี */
+.toast.success {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.toast.error {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.toast-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+/* =========================
+   ANIMATION
+========================= */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.password-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.password-form {
+  margin-top: 15px;
+}

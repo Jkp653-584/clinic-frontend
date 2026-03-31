@@ -1,19 +1,67 @@
 import { useEffect, useState } from 'react'
 import { useApi } from './api'
-import './App.css'
-import AuthPopup from './AuthPopup'
+import AuthPopup from './components/AuthPopup'
 import Home from './Home'
-import DoctorApp from './pages/doctor/DoctorApp'
-import PatientApp from './pages/patient/PatientApp'
+import RoleLayout from './components/RoleLayout'
+import { Routes, Route, Navigate } from "react-router-dom"
+export type User =
+  | ({
+    role: "patient";
+  } & PatientProfile)
+  | ({
+    role: "doctor";
+  } & DoctorProfile)
+  | ({
+    role: "staff";
+  } & CashierProfile)
+  | {
+    role: "owner";
+    username: string;
+    email: string;
+  };
 
-type User = {
-  id: number
-  username: string,
-  role: 'patient' | 'doctor'
-}
+export type PatientProfile = {
+  user_id: number;
+  username: string;
+  email: string;
+  role: "patient";
+  first_name: string;
+  last_name: string;
+  phone_number: string;
+  birth_date: string;
+  gender: string;
+  id_card_number: string;
+};
+
+export type DoctorProfile = {
+  user_id: number;
+  username: string;
+  email: string;
+  role: "doctor";
+  first_name: string;
+  last_name: string;
+  specialization: string;
+  license_number: string;
+  phone_number: string;
+  created_at: string;
+};
+
+export type CashierProfile = {
+  user_id: number;
+  username: string;
+  email: string;
+  role: "staff";
+  first_name: string;
+  last_name: string;
+  phone_number: string;
+  id_card_number: string;
+  position: string;
+  created_at: string;
+};
 
 function App() {
-  const { getMeApi , logoutApi } = useApi()
+  const { getMeApi, logoutApi } = useApi()
+
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [showAuth, setShowAuth] = useState(false)
@@ -22,6 +70,7 @@ function App() {
   useEffect(() => {
     async function init() {
       const token = localStorage.getItem('token')
+
       if (!token) {
         setLoading(false)
         return
@@ -51,15 +100,15 @@ function App() {
     }
   }
 
-  /* ---------- LOADING ---------- */
   if (loading) return <div className="center">Loading...</div>
 
+  /* ---------- NOT LOGIN ---------- */
 
-  // ================= NOT LOGIN → HOME =================
   if (!user) {
     return (
       <>
         <Home onLoginClick={() => setShowAuth(true)} />
+
         {showAuth && (
           <AuthPopup
             onAuthSuccess={() => window.location.reload()}
@@ -71,11 +120,16 @@ function App() {
   }
 
   /* ---------- ROLE BASE ---------- */
-  if (user.role === 'doctor') {
-    return <DoctorApp user={user} onLogout={handleLogout} />
-  }
 
-  return <PatientApp user={user} onLogout={handleLogout} />
+  return (
+    <Routes>
+      <Route path="/:role/*" element={
+        <RoleLayout user={user} setUser={setUser} onLogout={handleLogout} />
+      } />
+
+      <Route path="*" element={<Navigate to={`/${user.role}`} />} />
+    </Routes>
+  )
 }
 
 export default App

@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { useApi } from './api'
-
+import { useApi } from '../api'
 type Mode = 'login' | 'register'
 
 export default function popup_authentication({
@@ -180,56 +179,61 @@ export default function popup_authentication({
       />
 
       <div className={`auth-modal ${mode} ${closing ? 'closing' : ''}`}>
-        <button className="auth-close" onClick={closePopup}>×</button>
+        <div className="auth-modal-scroll">
 
-        <h2>{mode === 'login' ? 'Login' : 'Register'}</h2>
+          <button className="auth-close" onClick={closePopup}>❌</button>
 
-        {fields.map((f) => (
-          <div key={f.name} className="field">
-            <input
-              type={f.type}
-              placeholder={f.placeholder}
-              value={f.value}
-              className={fieldErrors[f.name] ? 'error' : ''}
-              onChange={(e) => {
-                f.set(e.target.value)
-                setFieldErrors((prev) => ({ ...prev, [f.name]: '' }))
-              }}
-            />
-            {renderFieldError(f.name)}
+          <h2>{mode === 'login' ? 'เข้าสู่ระบบ' : 'สร้างบัญชีผู้ป่วย'}</h2>
+          <div className="description" style={{ paddingBottom: "16px", textAlign: "center" }}>{mode === 'login' ? 'เข้าสู่ระบบเพื่อจัดการข้อมูลการรักษาและการนัดหมาย' : 'ลงทะเบียนเพื่อเริ่มใช้งานระบบคลินิก'}</div>
+
+          {fields.map((f) => (
+            <div key={f.name} className="field">
+              <input
+                type={f.type}
+                placeholder={f.placeholder}
+                value={f.value}
+                className={fieldErrors[f.name] ? 'error' : ''}
+                onChange={(e) => {
+                  f.set(e.target.value)
+                  setFieldErrors((prev) => ({ ...prev, [f.name]: '' }))
+                }}
+              />
+              {renderFieldError(f.name)}
+            </div>
+          ))}
+
+          {mode === 'register' && (
+            <>
+              <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
+              <select value={gender} onChange={(e) => setGender(e.target.value)}>
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </>
+          )}
+
+          {error && <p className="error">{error}</p>}
+          <div className="auth-button">
+            {mode === 'login' ? (
+              <button disabled={loading} onClick={handleLogin}>
+                {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
+              </button>
+            ) : (
+              <button disabled={loading} onClick={handleRegister}>
+                {loading ? 'กำลังสร้างบัญชี...' : 'สร้างบัญชี'}
+              </button>
+            )}
           </div>
-        ))}
 
-        {mode === 'register' && (
-          <>
-            <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
-            <select value={gender} onChange={(e) => setGender(e.target.value)}>
-              <option value="">Select gender</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-            </select>
-          </>
-        )}
-
-        {error && <p className="error">{error}</p>}
-
-        {mode === 'login' ? (
-          <button disabled={loading} onClick={handleLogin}>
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-        ) : (
-          <button disabled={loading} onClick={handleRegister}>
-            {loading ? 'Registering...' : 'Register'}
-          </button>
-        )}
-
-        <p className="switch">
-          {mode === 'login'
-            ? <>No account? <span onClick={() => switchMode('register')}>Register</span></>
-            : <>Already have account? <span onClick={() => switchMode('login')}>Login</span></>
-          }
-        </p>
+          <p className="switch">
+            {mode === 'login'
+              ? <>ยังไม่มีบํญชี? <span onClick={() => switchMode('register')}>สมัครใช้งาน</span></>
+              : <>มีบัญชีอยูแล้ว? <span onClick={() => switchMode('login')}>เข้าสู่ระบบ</span></>
+            }
+          </p>
+        </div>
       </div>
     </>
   )
