@@ -1,211 +1,178 @@
 .appointment-page {
-    padding: 32px;
-    font-family: sans-serif;
+  padding: 24px;
 }
 
 /* TITLE */
 
 .appointment-page h1 {
-    font-size: 28px;
-    font-weight: 700;
-    margin-bottom: 4px;
-    color: #111;
+  font-size: 24px;
+  font-weight: 700;
 }
 
 .appointment-page p {
-    color: #6b7280;
-    margin-bottom: 20px;
+  color: #6b7280;
+  margin-bottom: 16px;
 }
 
 /* FILTER */
 
 .appointment-filters {
-    display: flex;
-    gap: 0;
-    /* แก้ข้อ 1 */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .filter-btn {
-    padding: 10px 18px;
-    border: none;
-    border-radius: 10px 10px 0 0;
-    font-size: 14px;
-    cursor: pointer;
-    font-weight: 500;
-}
-
-/* tab colors */
-
-.filter-all {
-    background: #dbeafe;
-    color: #2563eb;
-}
-
-.filter-diagnosis {
-    background: #bfdbfe;
-    color: #1d4ed8;
-}
-
-.filter-treatment {
-    background: #bbf7d0;
-    color: #15803d;
-}
-
-.filter-waiting {
-    background: #fde68a;
-    color: #a16207;
-}
-
-.filter-completed {
-    background: #86efac;
-    color: #166534;
-}
-
-.filter-finished {
-    background: #e5e7eb;
-    color: #374151;
-}
-
-.filter-cancel {
-    background: #fecaca;
-    color: #b91c1c;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: none;
+  background: #e5e7eb;
+  cursor: pointer;
+  font-size: 13px;
 }
 
 .filter-btn.active {
-    border: 2px solid #3b82f6;
-    border-bottom: 0;
-    z-index: 2;
-    position: relative;
+  background: #2563eb;
+  color: white;
 }
 
 /* TABLE */
 
 .appointment-table-wrapper {
-    border: 2px solid #3b82f6;
-    border-radius: 0 10px 10px 10px;
-    overflow: hidden;
-    /* ทำให้ tab ต่อกับ table smooth */
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
 }
-
-/* TABLE AREA */
-
-.appointment-table-area {
-    height: 375px;
-    /* header + 6 rows */
-}
-
-/* TABLE */
 
 .appointment-table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
 }
 
-/* HEADER */
+.appointment-table th,
+.appointment-table td {
+  padding: 12px;
+  text-align: center;
+}
 
 .appointment-table th {
-    background: #d1d5db;
-    padding: 14px;
-    border-right: 2px solid #3b82f6;
-    border-bottom: 2px solid #3b82f6;
-    font-weight: 600;
-    color: #374151;
-    text-align: center;
+  background: #f3f4f6;
+  font-weight: 600;
 }
 
-/* ลบ border ซ้ายบน (ข้อ 2) */
-
-.appointment-table th:first-child {
-    border-left: none;
-}
-
-.appointment-table th:last-child {
-    border-right: none;
-}
-
-/* ROW */
-
-.appointment-table tbody tr {
-    height: 54px;
-    /* row height fix */
-}
-
-/* CELL */
-
-.appointment-table td {
-    padding: 12px;
-    border-right: 2px solid #3b82f6;
-    border-bottom: 2px solid #3b82f6;
-    /* แก้ข้อ 4 */
-    text-align: center;
-    color: #374151;
-}
-
-.appointment-table td:last-child {
-    border-right: none;
+.appointment-table tr {
+  border-bottom: 1px solid #e5e7eb;
 }
 
 /* STATUS */
 
-.status {
-    font-weight: 500;
-}
+.status-booked { color: #2563eb; }
+.status-awaiting_checkin { color: #d97706; }
+.status-checked_in { color: #0ea5e9; }
+.status-in_progress { color: #9333ea; }
+.status-dispensing { color: #f59e0b; }
+.status-completed { color: #16a34a; }
+.status-cancelled { color: #dc2626; }
 
-.status-diagnosis {
-    color: #2563eb;
-}
-
-.status-treatment {
-    color: #16a34a;
-}
-
-.status-waiting {
-    color: #d97706;
-}
-
-.status-completed {
-    color: #16a34a;
-}
-
-.status-finished {
-    color: #4b5563;
-}
-
-.status-cancel {
-    color: #dc2626;
-}
-
-/* ACTION */
+/* BUTTON */
 
 .action-cancel {
-    border: none;
-    background: none;
-    color: #dc2626;
-    cursor: pointer;
-    font-weight: 500;
+  border: none;
+  background: none;
+  color: #dc2626;
+  cursor: pointer;
 }
 
 /* PAGINATION */
 
 .pagination {
-    margin-top: 18px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
+  margin-top: 16px;
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
 }
 
 .page {
-    width: 38px;
-    height: 38px;
-    border: none;
-    border-radius: 10px;
-    background: #e5e7eb;
-    cursor: pointer;
-    font-weight: 600;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: none;
+  background: #e5e7eb;
+  cursor: pointer;
 }
 
 .page.active {
-    background: #2563eb;
-    color: white;
+  background: #2563eb;
+  color: white;
+}
+
+/* EMPTY */
+
+.empty {
+  padding: 40px;
+  text-align: center;
+  color: #6b7280;
+}
+
+/* MODAL */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal {
+  background: white;
+  padding: 24px;
+  border-radius: 14px;
+  width: 90%;
+  max-width: 360px;
+  text-align: center;
+}
+
+.modal-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+}
+
+.btn-cancel {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: #e5e7eb;
+}
+
+.btn-confirm {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: #dc2626;
+  color: white;
+}
+
+/* 📱 MOBILE */
+
+@media (max-width: 768px) {
+  .appointment-page {
+    padding: 16px;
+  }
+
+  .appointment-table th,
+  .appointment-table td {
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .filter-btn {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
 }

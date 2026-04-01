@@ -225,3 +225,20 @@ input.error {
 .password-form {
   margin-top: 15px;
 }
+
+.settings-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.inline-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.small {
+  padding: 6px 10px;
+  font-size: 14px;
+}

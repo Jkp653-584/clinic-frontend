@@ -420,5 +420,64 @@ export function useApi() {
 
       return data
     },
+    /* ---------- PATIENT: APPOINTMENT HISTORY ---------- */
+
+    // 🔥 ดึงประวัติการนัด
+    getMyAppointmentsApi: async () => {
+      const token = localStorage.getItem("token")
+
+      const res = await fetchWithLoading(`${API_BASE_URL}/appointment/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const data = await res.json()
+
+      if (res.status === 401) {
+        localStorage.removeItem("token")
+        throw new Error("Unauthorized")
+      }
+
+      if (!res.ok) {
+        throw new Error(data.message || "Fetch appointments failed")
+      }
+
+      return data.data
+    },
+
+    // 🔥 เปลี่ยน status (ใช้ cancel)
+    updateAppointmentStatusApi: async (
+      appointment_id: number,
+      status: string
+    ) => {
+      const token = localStorage.getItem("token")
+
+      const res = await fetchWithLoading(
+        `${API_BASE_URL}/appointment/${appointment_id}/status`,
+        {
+          method: "PATCH", // 🔥 ส่วนใหญ่ endpoint แบบนี้ใช้ PATCH
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status }),
+        }
+      )
+
+      const data = await res.json()
+
+      if (res.status === 401) {
+        localStorage.removeItem("token")
+        throw new Error("Unauthorized")
+      }
+
+      if (!res.ok) {
+        throw new Error(data.message || "Update status failed")
+      }
+
+      return data
+    },
+
   }
 }

@@ -16,66 +16,85 @@ type TimeSlot = {
 export default function Appointments() {
   const { getMonthlySlotsApi, getAvailableSlotsApi, bookAppointmentApi } = useApi()
   const { showToast } = useToast()
+
+  const today = new Date()
+
+  const [currentMonth, setCurrentMonth] = useState(
+    today.toISOString().slice(0, 7)
+  )
+
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
 
   const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([])
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
 
+  const [hasAvailableDay, setHasAvailableDay] = useState(true)
+
   const [symptom, setSymptom] = useState("")
   const [note, setNote] = useState("")
 
-  // โหลดปฏิทิน
+  // =====================
+  // LOAD CALENDAR
+  // =====================
   useEffect(() => {
     fetchCalendar()
-  }, [])
+  }, [currentMonth])
 
-  // โหลดเวลาเมื่อเลือกวัน
+  // =====================
+  // LOAD TIME WHEN SELECT DATE
+  // =====================
   useEffect(() => {
     if (selectedDate) {
       fetchTimeSlots(selectedDate)
     }
   }, [selectedDate])
 
-  // mock calendar
+  // =====================
+  // FETCH CALENDAR
+  // =====================
   const fetchCalendar = async () => {
     try {
-      const today = new Date()
-      const month = today.toISOString().slice(0, 7) // YYYY-MM
-
-      const data = await getMonthlySlotsApi(month)
+      const data = await getMonthlySlotsApi(currentMonth)
 
       const days: CalendarDay[] = []
 
-      const daysInMonth = new Date(
-        today.getFullYear(),
-        today.getMonth() + 1,
-        0
-      ).getDate()
+      const [year, month] = currentMonth.split("-").map(Number)
+      const daysInMonth = new Date(year, month, 0).getDate()
+
+      let hasAvailable = false
 
       for (let i = 1; i <= daysInMonth; i++) {
-        const date = `${month}-${String(i).padStart(2, "0")}`
+        const date = `${currentMonth}-${String(i).padStart(2, "0")}`
 
         const slots = data[date] || []
+        const available = slots.some((s: any) => s.is_available)
 
-        // 🔥 logic: ถ้ามี slot ที่ available อย่างน้อย 1 = ใช้ได้
-        const hasAvailable = slots.some((s: any) => s.is_available)
+        if (available) hasAvailable = true
 
         days.push({
           date,
           day: i,
-          disabled: !hasAvailable,
+          disabled: !available,
         })
       }
 
       setCalendarDays(days)
+      setHasAvailableDay(hasAvailable)
+
+      // reset เมื่อเปลี่ยนเดือน
+      setSelectedDate(null)
+      setSelectedTime(null)
+      setTimeSlots([])
 
     } catch (err: any) {
       showToast("error", err.message)
     }
   }
 
-  // mock timeslot
+  // =====================
+  // FETCH TIMESLOTS
+  // =====================
   const fetchTimeSlots = async (date: string) => {
     try {
       const slots = await getAvailableSlotsApi(date)
@@ -92,6 +111,35 @@ export default function Appointments() {
     }
   }
 
+  // =====================
+  // CHANGE MONTH
+  // =====================
+  const handlePrevMonth = () => {
+    const date = new Date(currentMonth + "-01")
+    date.setMonth(date.getMonth() - 1)
+
+    setCurrentMonth(date.toISOString().slice(0, 7))
+  }
+
+  const handleNextMonth = () => {
+    const date = new Date(currentMonth + "-01")
+    date.setMonth(date.getMonth() + 1)
+
+    setCurrentMonth(date.toISOString().slice(0, 7))
+  }
+
+  const formatMonth = (monthStr: string) => {
+    const date = new Date(monthStr + "-01")
+
+    return date.toLocaleDateString("th-TH", {
+      month: "long",
+      year: "numeric",
+    })
+  }
+
+  // =====================
+  // SUBMIT
+  // =====================
   const handleSubmit = async () => {
     if (!selectedDate || !selectedTime) {
       showToast("error", "กรุณาเลือกวันและเวลา")
@@ -107,14 +155,13 @@ export default function Appointments() {
 
       showToast("success", "จองคิวสำเร็จ 🎉")
 
-      // reset
       setSelectedDate(null)
       setSelectedTime(null)
       setSymptom("")
       setNote("")
       setTimeSlots([])
 
-      fetchCalendar() // refresh
+      fetchCalendar()
 
     } catch (err: any) {
       showToast("error", err.message)
@@ -122,45 +169,62 @@ export default function Appointments() {
   }
 
   return (
-
     <div className="appointment-page">
 
       <h1>นัดหมายเข้ารับการรักษา</h1>
       <p>เลือกวันและเวลาที่สะดวก ระบบจะแสดงเฉพาะช่วงเวลาที่แพทย์ว่าง</p>
 
-      {/* CALENDAR */}
-
-      <div className="calendar-grid">
-
-        {calendarDays.map(day => (
-
-          <button
-            key={day.date}
-            disabled={day.disabled}
-            className={`calendar-day 
-              ${selectedDate === day.date ? "active" : ""}
-            `}
-            onClick={() => setSelectedDate(day.date)}
-          >
-            {day.day}
-          </button>
-
-        ))}
-
+      {/* ===================== */}
+      {/* MONTH HEADER */}
+      {/* ===================== */}
+      <div className="calendar-header">
+        <button className="nav-btn" onClick={handlePrevMonth}>‹</button>
+        <div className="month-label">{formatMonth(currentMonth)}</div>
+        <button className="nav-btn" onClick={handleNextMonth}>›</button>
       </div>
 
+      {/* ===================== */}
+      {/* STEP 1: CALENDAR */}
+      {/* ===================== */}
+      {!hasAvailableDay ? (
 
-      {/* TIME SLOTS */}
+        <div className="no-available">
+          ❌ ไม่มีคิวว่างในเดือนนี้<br />
+          กรุณาเลือกเดือนอื่น
+        </div>
 
+      ) : (
+
+        <div className="calendar-grid">
+          {calendarDays.map(day => (
+            <button
+              key={day.date}
+              disabled={day.disabled}
+              className={`calendar-day 
+                ${selectedDate === day.date ? "active" : ""}
+              `}
+              onClick={() => {
+                setSelectedDate(day.date)
+                setSelectedTime(null)
+              }}
+            >
+              {day.day}
+            </button>
+          ))}
+        </div>
+
+      )}
+
+      {/* ===================== */}
+      {/* STEP 2: TIME */}
+      {/* ===================== */}
       {selectedDate && (
 
         <>
           <h3>เลือกช่วงเวลา</h3>
 
           <div className="time-grid">
-
             {timeSlots.map(slot => (
-
               <button
                 key={slot.time}
                 disabled={slot.disabled}
@@ -171,51 +235,42 @@ export default function Appointments() {
               >
                 {slot.time}
               </button>
-
             ))}
-
           </div>
         </>
 
       )}
 
+      {/* ===================== */}
+      {/* STEP 3: FORM */}
+      {/* ===================== */}
+      {selectedTime && (
 
-      {/* SYMPTOM */}
+        <>
+          <div className="form-group">
+            <label>อาการเบื้องต้น</label>
+            <textarea
+              placeholder="เช่น ไอ เจ็บคอ ปวดท้อง"
+              value={symptom}
+              onChange={(e) => setSymptom(e.target.value)}
+            />
+          </div>
 
-      <div className="form-group">
+          <div className="form-group">
+            <label>หมายเหตุเพิ่มเติม (ถ้ามี)</label>
+            <textarea
+              placeholder="เช่น แพ้ยา หรือโรคประจำตัว"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+          </div>
 
-        <label>อาการเบื้องต้น</label>
+          <button className="confirm-btn" onClick={handleSubmit}>
+            ยืนยันการนัดหมาย
+          </button>
+        </>
 
-        <textarea
-          placeholder="เช่น ไอ เจ็บคอ ปวดท้อง"
-          value={symptom}
-          onChange={(e) => setSymptom(e.target.value)}
-        />
-
-      </div>
-
-
-      {/* NOTE */}
-
-      <div className="form-group">
-
-        <label>หมายเหตุเพิ่มเติม (ถ้ามี)</label>
-
-        <textarea
-          placeholder="เช่น แพ้ยา หรือโรคประจำตัว"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-        />
-
-      </div>
-
-
-      <button
-        className="confirm-btn"
-        onClick={handleSubmit}
-      >
-        ยืนยันการนัดหมาย
-      </button>
+      )}
 
     </div>
   )

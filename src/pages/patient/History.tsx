@@ -1,12 +1,15 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useApi } from "../../api"
+import { useToast } from "../../components/ToastContext"
 
 type AppointmentStatus =
-  | "diagnosis"
-  | "treatment"
-  | "waiting"
+  | "booked"
+  | "awaiting_checkin"
+  | "checked_in"
+  | "in_progress"
+  | "dispensing"
   | "completed"
-  | "finished"
-  | "cancel"
+  | "cancelled"
 
 type AppointmentFilter = AppointmentStatus | "all"
 
@@ -19,46 +22,88 @@ type Appointment = {
 }
 
 const statusText: Record<AppointmentStatus, string> = {
-  diagnosis: "นัดวินิจฉัย",
-  treatment: "นัดรักษา",
-  waiting: "กำลังพบแพทย์",
-  completed: "รักษา/จ่ายยาแล้ว",
-  finished: "สิ้นสุดการรักษา",
-  cancel: "ยกเลิก"
+  booked: "จองสำเร็จ",
+  awaiting_checkin: "รอเช็คอิน",
+  checked_in: "รอตรวจ",
+  in_progress: "กำลังตรวจ",
+  dispensing: "รอจ่ายยา",
+  completed: "สำเร็จ",
+  cancelled: "ยกเลิก",
 }
 
-type FilterItem = {
-  key: AppointmentFilter
-  label: string
-  class: string
-}
-
-const filters: FilterItem[] = [
-  { key: "all", label: "ทั้งหมด", class: "filter-all" },
-  { key: "diagnosis", label: "นัดวินิจฉัย", class: "filter-diagnosis" },
-  { key: "treatment", label: "นัดรักษา", class: "filter-treatment" },
-  { key: "waiting", label: "กำลังพบแพทย์", class: "filter-waiting" },
-  { key: "completed", label: "รักษา/จ่ายยาแล้ว", class: "filter-completed" },
-  { key: "finished", label: "สิ้นสุดการรักษา", class: "filter-finished" },
-  { key: "cancel", label: "ยกเลิก", class: "filter-cancel" }
+const filters: { key: AppointmentFilter; label: string }[] = [
+  { key: "all", label: "ทั้งหมด" },
+  { key: "booked", label: "จองสำเร็จ" },
+  { key: "awaiting_checkin", label: "รอเช็คอิน" },
+  { key: "checked_in", label: "รอตรวจ" },
+  { key: "in_progress", label: "กำลังตรวจ" },
+  { key: "dispensing", label: "รอจ่ายยา" },
+  { key: "completed", label: "สำเร็จ" },
+  { key: "cancelled", label: "ยกเลิก" },
 ]
 
 export default function AppointmentHistory() {
+  const { getMyAppointmentsApi, updateAppointmentStatusApi } = useApi()
+  const { showToast } = useToast()
 
+  const [appointments, setAppointments] = useState<Appointment[]>([])
   const [filter, setFilter] = useState<AppointmentFilter>("all")
   const [page, setPage] = useState(1)
 
-  /* ---------- MOCK DATA (แทน API) ---------- */
+  const [loading, setLoading] = useState(false)
 
-  const appointments: Appointment[] = [
-    { id: 1, date: "21 มี.ค. 2569", time: "14:30", doctor: "นพ.สมชาย", status: "diagnosis" },
-    { id: 2, date: "21 มี.ค. 2569", time: "15:30", doctor: "นพ.สมชาย", status: "treatment" },
-    { id: 3, date: "22 มี.ค. 2569", time: "09:30", doctor: "พญ.กมล", status: "waiting" },
-    { id: 4, date: "22 มี.ค. 2569", time: "10:00", doctor: "พญ.กมล", status: "completed" },
-    { id: 5, date: "23 มี.ค. 2569", time: "13:00", doctor: "นพ.วิชัย", status: "finished" },
-    { id: 6, date: "23 มี.ค. 2569", time: "14:00", doctor: "นพ.วิชัย", status: "cancel" },
-    { id: 7, date: "24 มี.ค. 2569", time: "10:30", doctor: "นพ.สมชาย", status: "diagnosis" }
-  ]
+  // 🔥 confirm modal
+  const [confirmId, setConfirmId] = useState<number | null>(null)
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+
+      const data = await getMyAppointmentsApi()
+
+      const mapped: Appointment[] = data.map((a: any) => ({
+        id: a.appointment_id,
+        date: formatDate(a.appointment_date),
+        time: a.start_time.slice(0, 5),
+        doctor: a.doctor_fullname,
+        status: a.status,
+      }))
+
+      setAppointments(mapped)
+    } catch (err: any) {
+      showToast("error", err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCancel = async () => {
+    if (!confirmId) return
+
+    try {
+      await updateAppointmentStatusApi(confirmId, "cancelled")
+
+      showToast("success", "ยกเลิกนัดหมายสำเร็จ")
+
+      setConfirmId(null)
+      fetchData()
+    } catch (err: any) {
+      showToast("error", err.message)
+    }
+  }
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr)
+    return d.toLocaleDateString("th-TH", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    })
+  }
 
   /* ---------- FILTER ---------- */
 
@@ -70,7 +115,6 @@ export default function AppointmentHistory() {
   /* ---------- PAGINATION ---------- */
 
   const pageSize = 6
-
   const totalPages = Math.ceil(filtered.length / pageSize)
 
   const paginated = filtered.slice(
@@ -81,19 +125,16 @@ export default function AppointmentHistory() {
   return (
     <div className="appointment-page">
 
-      <h1>ประวัติ / สถานะการนัดหมาย</h1>
-      <p>ประวัติการนัดหมายและสถานะการเข้ารับบริการ</p>
+      <h1>ประวัติการนัดหมาย</h1>
+      <p>ติดตามสถานะการรักษาและการนัดหมายของคุณ</p>
 
       {/* FILTER */}
 
       <div className="appointment-filters">
-
         {filters.map((f) => (
           <button
             key={f.key}
-            className={`filter-btn ${f.class} ${
-              filter === f.key ? "active" : ""
-            }`}
+            className={`filter-btn ${filter === f.key ? "active" : ""}`}
             onClick={() => {
               setFilter(f.key)
               setPage(1)
@@ -102,14 +143,17 @@ export default function AppointmentHistory() {
             {f.label}
           </button>
         ))}
-
       </div>
 
       {/* TABLE */}
 
       <div className="appointment-table-wrapper">
 
-        <div className="appointment-table-area">
+        {loading ? (
+          <div className="empty">กำลังโหลด...</div>
+        ) : paginated.length === 0 ? (
+          <div className="empty">ไม่มีข้อมูล</div>
+        ) : (
 
           <table className="appointment-table">
 
@@ -119,7 +163,7 @@ export default function AppointmentHistory() {
                 <th>เวลา</th>
                 <th>แพทย์</th>
                 <th>สถานะ</th>
-                <th>การกระทำ</th>
+                <th></th>
               </tr>
             </thead>
 
@@ -130,9 +174,7 @@ export default function AppointmentHistory() {
                 <tr key={a.id}>
 
                   <td>{a.date}</td>
-
                   <td>{a.time}</td>
-
                   <td>{a.doctor}</td>
 
                   <td className={`status status-${a.status}`}>
@@ -140,16 +182,17 @@ export default function AppointmentHistory() {
                   </td>
 
                   <td>
+                    {(a.status === "booked" ||
+                      a.status === "awaiting_checkin") && (
 
-                    {a.status === "diagnosis" ||
-                    a.status === "treatment" ? (
-                      <button className="action-cancel">
+                      <button
+                        className="action-cancel"
+                        onClick={() => setConfirmId(a.id)}
+                      >
                         ยกเลิก
                       </button>
-                    ) : (
-                      "-"
-                    )}
 
+                    )}
                   </td>
 
                 </tr>
@@ -160,18 +203,15 @@ export default function AppointmentHistory() {
 
           </table>
 
-        </div>
+        )}
 
       </div>
 
       {/* PAGINATION */}
 
       <div className="pagination">
-
         {Array.from({ length: totalPages }).map((_, i) => {
-
           const p = i + 1
-
           return (
             <button
               key={p}
@@ -181,10 +221,30 @@ export default function AppointmentHistory() {
               {p}
             </button>
           )
-
         })}
-
       </div>
+
+      {/* 🔥 CONFIRM MODAL */}
+
+      {confirmId && (
+        <div className="modal-overlay">
+          <div className="modal">
+
+            <h3>ยืนยันการยกเลิก</h3>
+            <p>คุณแน่ใจหรือไม่ว่าต้องการยกเลิกนัดหมายนี้?</p>
+
+            <div className="modal-actions">
+              <button className="btn-cancel" onClick={() => setConfirmId(null)}>
+                ยกเลิก
+              </button>
+              <button className="btn-confirm" onClick={handleCancel}>
+                ยืนยัน
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   )
