@@ -1,43 +1,55 @@
 import { useState, useMemo } from "react"
+import { useApi } from "../../api"
 
-type Status = "waiting" | "progress" | "done" | "cancel"
+/* ---------- TYPE ---------- */
+
+type Status =
+  | "awaiting_checkin"
+  | "checked_in"
+  | "cancelled"
 
 type Appointment = {
   id: number
-  date: string // YYYY-MM-DD (สำคัญสำหรับ API)
+  date: string
   time: string
   patient: string
-  symptom: string
   status: Status
 }
 
+/* ---------- STATUS TEXT ---------- */
+
 const statusText: Record<Status, string> = {
-  waiting: "รอเช็คอิน",
-  progress: "กำลังรักษา",
-  done: "เสร็จแล้ว",
-  cancel: "ยกเลิก"
+  awaiting_checkin: "รอเช็คอิน",
+  checked_in: "เช็คอินแล้ว",
+  cancelled: "ยกเลิก"
 }
 
 export default function All() {
 
+  const { updateAppointmentStatusApi } = useApi()
+
   const [filter, setFilter] = useState<Status | "all">("all")
   const [date, setDate] = useState("")
+  const [selectedId, setSelectedId] = useState<number | null>(null)
 
-  /* MOCK DATA */
-  const data: Appointment[] = [
-    { id: 1, date: "2026-03-21", time: "09:00", patient: "สมชาย", symptom: "มีไข้", status: "waiting" },
-    { id: 2, date: "2026-03-21", time: "09:30", patient: "อรทัย", symptom: "ปวดหัว", status: "progress" },
-    { id: 3, date: "2026-03-22", time: "10:00", patient: "ธนา", symptom: "ตรวจสุขภาพ", status: "done" },
-    { id: 4, date: "2026-03-22", time: "10:30", patient: "กนก", symptom: "เจ็บคอ", status: "cancel" },
-  ]
+  /* ---------- MOCK DATA ---------- */
 
-  /* ✅ filter ตามวันที่ */
+  const [data, setData] = useState<Appointment[]>([
+    { id: 1, date: "2026-03-21", time: "09:00", patient: "สมชาย", status: "awaiting_checkin" },
+    { id: 2, date: "2026-03-21", time: "09:30", patient: "อรทัย", status: "checked_in" },
+    { id: 3, date: "2026-03-22", time: "10:00", patient: "ธนา", status: "awaiting_checkin" },
+    { id: 4, date: "2026-03-22", time: "10:30", patient: "กนก", status: "cancelled" },
+  ])
+
+  /* ---------- FILTER DATE ---------- */
+
   const dateFiltered = useMemo(() => {
     if (!date) return data
     return data.filter(d => d.date === date)
   }, [date, data])
 
-  /* ✅ count */
+  /* ---------- COUNT ---------- */
+
   const counts = useMemo(() => {
     const result: Record<string, number> = {}
     dateFiltered.forEach(d => {
@@ -46,87 +58,172 @@ export default function All() {
     return result
   }, [dateFiltered])
 
-  /* ✅ filter status */
+  /* ---------- FILTER STATUS ---------- */
+
   const filtered =
     filter === "all"
       ? dateFiltered
       : dateFiltered.filter(d => d.status === filter)
+
+  /* ---------- ACTION ---------- */
+
+  const confirmCancel = async () => {
+    if (!selectedId) return
+
+    try {
+      await updateAppointmentStatusApi(selectedId, "cancelled")
+
+      setData(prev =>
+        prev.map(d =>
+          d.id === selectedId ? { ...d, status: "cancelled" } : d
+        )
+      )
+
+      setSelectedId(null)
+
+    } catch (err: any) {
+      alert(err.message)
+    }
+  }
 
   return (
     <div className="appointment-page">
 
       <h1>นัดหมายทั้งหมด</h1>
 
-
-
-      {/* FILTER */}
+      {/* FILTER BAR */}
       <div className="appointment-filter-bar">
+
         <div className="appointment-filter-left">
-          <button onClick={() => setFilter("all")} className="filter-btn">
+
+          <button
+            onClick={() => setFilter("all")}
+            className={`filter-btn ${filter === "all" ? "active" : ""}`}
+          >
             ทั้งหมด ({dateFiltered.length})
           </button>
 
-          <button onClick={() => setFilter("waiting")} className="filter-btn">
-            รอเช็คอิน ({counts.waiting || 0})
+          <button
+            onClick={() => setFilter("awaiting_checkin")}
+            className={`filter-btn ${filter === "awaiting_checkin" ? "active" : ""}`}
+          >
+            รอเช็คอิน ({counts.awaiting_checkin || 0})
           </button>
 
-          <button onClick={() => setFilter("progress")} className="filter-btn">
-            กำลังรักษา ({counts.progress || 0})
+          <button
+            onClick={() => setFilter("checked_in")}
+            className={`filter-btn ${filter === "checked_in" ? "active" : ""}`}
+          >
+            เช็คอินแล้ว ({counts.checked_in || 0})
           </button>
 
-          <button onClick={() => setFilter("done")} className="filter-btn">
-            เสร็จแล้ว ({counts.done || 0})
+          <button
+            onClick={() => setFilter("cancelled")}
+            className={`filter-btn ${filter === "cancelled" ? "active" : ""}`}
+          >
+            ยกเลิก ({counts.cancelled || 0})
           </button>
 
-          <button onClick={() => setFilter("cancel")} className="filter-btn">
-            ยกเลิก ({counts.cancel || 0})
-          </button>
         </div>
-        <div className="appointment-filter-right" style={{ marginTop: "-14px"}}>
-          {/* DATE FILTER */}
-          <div className="filter-row">
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
-          </div>
+
+        <div className="appointment-filter-right">
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
         </div>
+
       </div>
 
       {/* TABLE */}
       <div className="appointment-table-wrapper">
-        <div className="appointment-table-area">
 
-          <table className="appointment-table">
-            <thead>
+        <table className="appointment-table">
+
+          <thead>
+            <tr>
+              <th>วันที่</th>
+              <th>เวลา</th>
+              <th>ผู้ป่วย</th>
+              <th>สถานะ</th>
+              <th>จัดการ</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            {filtered.length === 0 && (
               <tr>
-                <th>วันที่</th>
-                <th>เวลา</th>
-                <th>ผู้ป่วย</th>
-                <th>อาการ</th>
-                <th>สถานะ</th>
+                <td colSpan={5} className="empty">
+                  ไม่มีข้อมูล
+                </td>
               </tr>
-            </thead>
+            )}
 
-            <tbody>
-              {filtered.map((a) => (
-                <tr key={a.id}>
-                  <td>{a.date}</td>
-                  <td>{a.time}</td>
-                  <td>{a.patient}</td>
-                  <td>{a.symptom}</td>
-                  <td className={`status status-${a.status}`}>
-                    {statusText[a.status]}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+            {filtered.map((a) => (
+              <tr key={a.id}>
 
-          </table>
+                <td>{a.date}</td>
+                <td>{a.time}</td>
+                <td>{a.patient}</td>
 
-        </div>
+                <td className={`status status-${a.status}`}>
+                  {statusText[a.status]}
+                </td>
+
+                <td>
+
+                  {a.status === "awaiting_checkin" && (
+                    <button
+                      className="action-cancel"
+                      onClick={() => setSelectedId(a.id)}
+                    >
+                      ยกเลิก
+                    </button>
+                  )}
+
+                  {a.status !== "awaiting_checkin" && "-"}
+
+                </td>
+
+              </tr>
+            ))}
+
+          </tbody>
+
+        </table>
+
       </div>
+
+      {/* MODAL CONFIRM */}
+      {selectedId && (
+        <div className="modal-overlay">
+          <div className="modal">
+
+            <h3>ยืนยันการยกเลิกนัด?</h3>
+
+            <div className="modal-actions">
+
+              <button
+                className="btn-cancel"
+                onClick={() => setSelectedId(null)}
+              >
+                ย้อนกลับ
+              </button>
+
+              <button
+                className="btn-confirm"
+                onClick={confirmCancel}
+              >
+                ยืนยัน
+              </button>
+
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   )

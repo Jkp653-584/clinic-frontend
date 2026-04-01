@@ -2,193 +2,225 @@ import { useState } from "react"
 
 /* ---------- TYPE ---------- */
 
-type QueueStatus =
-  | "waiting"
-  | "diagnosis"
-  | "treatment"
+type Status =
+  | "checked_in"
+  | "in_progress"
+  | "dispensing"
   | "completed"
-
-type QueueFilter = QueueStatus | "all"
 
 type Queue = {
   id: number
   name: string
   time: string
   symptom: string
-  status: QueueStatus
+  status: Status
+}
+
+type MedicalRecordForm = {
+  symptoms: string
+  diagnosis: string
+  treatment_plan: string
 }
 
 /* ---------- STATUS TEXT ---------- */
 
-const statusText: Record<QueueStatus, string> = {
-  waiting: "รอตรวจ",
-  diagnosis: "กำลังวินิจฉัย",
-  treatment: "กำลังรักษา",
-  completed: "เสร็จสิ้น"
+const statusText: Record<Status, string> = {
+  checked_in: "รอเรียก",
+  in_progress: "กำลังตรวจ",
+  dispensing: "รอจ่ายยา",
+  completed: "เสร็จแล้ว"
 }
-
-/* ---------- FILTER ---------- */
-
-const filters = [
-  { key: "all", label: "ทั้งหมด", class: "filter-all" },
-  { key: "waiting", label: "รอตรวจ", class: "filter-diagnosis" },
-  { key: "diagnosis", label: "วินิจฉัย", class: "filter-treatment" },
-  { key: "treatment", label: "รักษา", class: "filter-waiting" },
-  { key: "completed", label: "เสร็จสิ้น", class: "filter-completed" }
-] as const
 
 export default function TodayQueue() {
 
-  const [filter, setFilter] = useState<QueueFilter>("all")
-  const [page, setPage] = useState(1)
+  const [filter, setFilter] = useState<"all" | Status>("all")
+  const [selected, setSelected] = useState<Queue | null>(null)
 
   /* ---------- MOCK DATA ---------- */
 
-  const queues: Queue[] = [
-    { id: 1, name: "สมชาย สุขใจ", time: "09:30", symptom: "มีไข้ ไอ เจ็บคอ", status: "waiting" },
-    { id: 2, name: "สมหญิง สุขสัน", time: "10:30", symptom: "ปวดท้อง แน่นท้อง", status: "diagnosis" },
-    { id: 3, name: "สายลม ตอนเย็น", time: "13:00", symptom: "ผื่นขึ้นตามตัว", status: "treatment" },
-    { id: 4, name: "สายลม คนเข้ม", time: "16:00", symptom: "ปวดศีรษะเรื้อรัง", status: "completed" },
-    { id: 5, name: "วิชัย บุญมาก", time: "17:00", symptom: "ไอเรื้อรัง", status: "waiting" },
-    { id: 6, name: "อรทัย มีสุข", time: "18:00", symptom: "เวียนหัว", status: "waiting" },
-  ]
+  const [queues, setQueues] = useState<Queue[]>([
+    { id: 1, name: "สมชาย", time: "09:30", symptom: "มีไข้", status: "checked_in" },
+    { id: 2, name: "สมหญิง", time: "10:30", symptom: "ปวดท้อง", status: "in_progress" },
+    { id: 3, name: "สายลม", time: "13:00", symptom: "ผื่น", status: "checked_in" },
+  ])
 
   /* ---------- FILTER ---------- */
 
   const filtered =
     filter === "all"
       ? queues
-      : queues.filter((q) => q.status === filter)
+      : queues.filter(q => q.status === filter)
 
-  /* ---------- PAGINATION ---------- */
+  /* ---------- ACTION ---------- */
 
-  const pageSize = 6
-  const totalPages = Math.ceil(filtered.length / pageSize)
+  const startTreatment = (id: number) => {
+    setQueues(prev =>
+      prev.map(q =>
+        q.id === id ? { ...q, status: "in_progress" } : q
+      )
+    )
+  }
 
-  const paginated = filtered.slice(
-    (page - 1) * pageSize,
-    page * pageSize
-  )
+  const completeTreatment = (id: number) => {
+    setQueues(prev =>
+      prev.map(q =>
+        q.id === id ? { ...q, status: "dispensing" } : q
+      )
+    )
+  }
+
+  const handleSubmit = (form: MedicalRecordForm) => {
+    if (!selected) return
+
+    console.log("SEND API", form)
+
+    completeTreatment(selected.id)
+    setSelected(null)
+  }
 
   return (
     <div className="appointment-page">
 
       <h1>คิวตรวจวันนี้</h1>
-      <p>รายการผู้ป่วยที่รอเข้ารับการตรวจ</p>
 
       {/* FILTER */}
-
       <div className="appointment-filters">
 
-        {filters.map((f) => (
-          <button
-            key={f.key}
-            className={`filter-btn ${f.class} ${
-              filter === f.key ? "active" : ""
-            }`}
-            onClick={() => {
-              setFilter(f.key)
-              setPage(1)
-            }}
-          >
-            {f.label}
-          </button>
-        ))}
+        <button onClick={() => setFilter("all")} className="filter-btn">
+          ทั้งหมด
+        </button>
+
+        <button onClick={() => setFilter("checked_in")} className="filter-btn">
+          รอเรียก
+        </button>
+
+        <button onClick={() => setFilter("in_progress")} className="filter-btn">
+          กำลังตรวจ
+        </button>
 
       </div>
 
       {/* TABLE */}
-
       <div className="appointment-table-wrapper">
+        <table className="appointment-table">
 
-        <div className="appointment-table-area">
+          <thead>
+            <tr>
+              <th>ชื่อ</th>
+              <th>เวลา</th>
+              <th>อาการ</th>
+              <th>สถานะ</th>
+              <th>จัดการ</th>
+            </tr>
+          </thead>
 
-          <table className="appointment-table">
+          <tbody>
 
-            <thead>
-              <tr>
-                <th>ชื่อ-นามสกุล</th>
-                <th>เวลา</th>
-                <th>อาการเบื้องต้น</th>
-                <th>สถานะ</th>
-                <th>การกระทำ</th>
+            {filtered.map(q => (
+              <tr key={q.id}>
+
+                <td>{q.name}</td>
+                <td>{q.time}</td>
+                <td>{q.symptom}</td>
+
+                <td className={`status status-${q.status}`}>
+                  {statusText[q.status]}
+                </td>
+
+                <td>
+
+                  {q.status === "checked_in" && (
+                    <button onClick={() => startTreatment(q.id)}>
+                      เริ่มตรวจ
+                    </button>
+                  )}
+
+                  {q.status === "in_progress" && (
+                    <button onClick={() => setSelected(q)}>
+                      บันทึกผล
+                    </button>
+                  )}
+
+                </td>
+
               </tr>
-            </thead>
+            ))}
 
-            <tbody>
+          </tbody>
 
-              {paginated.map((q) => (
+        </table>
+      </div>
 
-                <tr key={q.id}>
+      {/* MODAL */}
+      {selected && (
+        <MedicalRecordModal
+          onClose={() => setSelected(null)}
+          onSubmit={handleSubmit}
+        />
+      )}
 
-                  <td>{q.name}</td>
+    </div>
+  )
+}
 
-                  <td>{q.time}</td>
+/* ---------- MODAL ---------- */
 
-                  <td>{q.symptom}</td>
+type ModalProps = {
+  onClose: () => void
+  onSubmit: (form: MedicalRecordForm) => void
+}
 
-                  <td className={`status status-${q.status}`}>
-                    {statusText[q.status]}
-                  </td>
+function MedicalRecordModal({
+  onClose,
+  onSubmit
+}: ModalProps) {
 
-                  <td>
+  const [form, setForm] = useState<MedicalRecordForm>({
+    symptoms: "",
+    diagnosis: "",
+    treatment_plan: ""
+  })
 
-                    {q.status === "waiting" && (
-                      <button className="action-start">
-                        เริ่มตรวจ
-                      </button>
-                    )}
+  return (
+    <div className="modal-overlay">
+      <div className="modal">
 
-                    {q.status === "diagnosis" && (
-                      <button className="action-next">
-                        ไปขั้นรักษา
-                      </button>
-                    )}
+        <h3>บันทึกผลการรักษา</h3>
 
-                    {q.status === "treatment" && (
-                      <button className="action-complete">
-                        เสร็จสิ้น
-                      </button>
-                    )}
+        <input
+          placeholder="อาการ"
+          value={form.symptoms}
+          onChange={e => setForm({ ...form, symptoms: e.target.value })}
+        />
 
-                    {q.status === "completed" && "-"}
-                    
-                  </td>
+        <input
+          placeholder="วินิจฉัย"
+          value={form.diagnosis}
+          onChange={e => setForm({ ...form, diagnosis: e.target.value })}
+        />
 
-                </tr>
+        <input
+          placeholder="แผนการรักษา"
+          value={form.treatment_plan}
+          onChange={e => setForm({ ...form, treatment_plan: e.target.value })}
+        />
 
-              ))}
+        <div className="modal-actions">
 
-            </tbody>
+          <button className="btn-cancel" onClick={onClose}>
+            ยกเลิก
+          </button>
 
-          </table>
+          <button
+            className="btn-confirm"
+            onClick={() => onSubmit(form)}
+          >
+            บันทึก
+          </button>
 
         </div>
 
       </div>
-
-      {/* PAGINATION */}
-
-      <div className="pagination">
-
-        {Array.from({ length: totalPages }).map((_, i) => {
-
-          const p = i + 1
-
-          return (
-            <button
-              key={p}
-              className={`page ${page === p ? "active" : ""}`}
-              onClick={() => setPage(p)}
-            >
-              {p}
-            </button>
-          )
-
-        })}
-
-      </div>
-
     </div>
   )
 }

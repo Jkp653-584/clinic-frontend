@@ -478,6 +478,41 @@ export function useApi() {
 
       return data
     },
+    createMedicalRecordApi: async (
+      appointment_id: number,
+      body: {
+        symptoms: string
+        diagnosis: string
+        treatment_plan: string
+      }
+    ) => {
+      const token = localStorage.getItem("token")
+
+      const res = await fetchWithLoading(
+        `${API_BASE_URL}/appointment/${appointment_id}/medical-records`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
+        }
+      )
+
+      const data = await res.json()
+
+      if (res.status === 401) {
+        localStorage.removeItem("token")
+        throw new Error("Unauthorized")
+      }
+
+      if (!res.ok) {
+        throw new Error(data.message || "Create medical record failed")
+      }
+
+      return data
+    }
 
   }
 }
