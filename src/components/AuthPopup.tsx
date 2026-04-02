@@ -1,15 +1,16 @@
 import { useState } from 'react'
 import { useApi } from '../api'
-type Mode = 'login' | 'register'
 
-export default function popup_authentication({
+type Mode = 'login' | 'register' | 'forgot'
+
+export default function PopupAuthentication({
   onAuthSuccess,
   onClose,
 }: {
   onAuthSuccess: () => void
   onClose: () => void
 }) {
-  const { loginApi, registerApi } = useApi()
+  const { loginApi, registerApi, updatePasswordApi } = useApi()
 
   const [mode, setMode] = useState<Mode>('login')
   const [loading, setLoading] = useState(false)
@@ -29,6 +30,7 @@ export default function popup_authentication({
   const [birthDate, setBirthDate] = useState('')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [gender, setGender] = useState('')
+  const [newPassword, setNewPassword] = useState('')
 
   function closePopup() {
     setClosing(true)
@@ -39,6 +41,11 @@ export default function popup_authentication({
     setMode(next)
     setError('')
     setFieldErrors({})
+    setUsername('')
+    setPassword('')
+    setConfirmPassword('')
+    setEmail('')
+    setNewPassword('')
   }
 
   function renderFieldError(name: string) {
@@ -47,7 +54,6 @@ export default function popup_authentication({
   }
 
   /* ---------------- LOGIN ---------------- */
-
   async function handleLogin() {
     try {
       setLoading(true)
@@ -65,9 +71,7 @@ export default function popup_authentication({
   }
 
   /* ---------------- REGISTER ---------------- */
-
   async function handleRegister() {
-    // frontend validation
     if (password !== confirmPassword) {
       setFieldErrors({ confirm_password: 'Passwords do not match' })
       return
@@ -93,7 +97,6 @@ export default function popup_authentication({
 
       setMode('login')
     } catch (err: any) {
-      // 🔥 รองรับ field errors จาก backend
       if (err.fieldErrors) {
         setFieldErrors(err.fieldErrors)
       } else {
@@ -104,72 +107,48 @@ export default function popup_authentication({
     }
   }
 
-  /* ---------------- FIELD CONFIG ---------------- */
+  /* ---------------- FORGOT PASSWORD ---------------- */
+  async function handleForgotPassword() {
+    if (!email || !newPassword) {
+      setError('กรุณากรอกอีเมลและรหัสผ่านใหม่')
+      return
+    }
 
+    try {
+      setLoading(true)
+      setError('')
+      setFieldErrors({})
+
+      await updatePasswordApi({
+        email,
+        new_password: newPassword,
+        old_password: '', // ส่งเป็น empty สำหรับ forgot password
+      })
+
+      alert('รีเซ็ตรหัสผ่านสำเร็จ 🎉')
+      switchMode('login')
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  /* ---------------- FIELD CONFIG ---------------- */
   const loginFields = [
-    {
-      name: 'username',
-      placeholder: 'Username',
-      value: username,
-      set: setUsername,
-      type: 'text',
-    },
-    {
-      name: 'password',
-      placeholder: 'Password',
-      value: password,
-      set: setPassword,
-      type: 'password',
-    },
+    { name: 'username', placeholder: 'Username', value: username, set: setUsername, type: 'text' },
+    { name: 'password', placeholder: 'Password', value: password, set: setPassword, type: 'password' },
   ]
 
   const registerFields = [
     ...loginFields,
-    {
-      name: 'confirm_password',
-      placeholder: 'Confirm password',
-      value: confirmPassword,
-      set: setConfirmPassword,
-      type: 'password',
-    },
-    {
-      name: 'email',
-      placeholder: 'Email',
-      value: email,
-      set: setEmail,
-      type: 'text',
-    },
-    {
-      name: 'first_name',
-      placeholder: 'First name',
-      value: firstName,
-      set: setFirstName,
-      type: 'text',
-    },
-    {
-      name: 'last_name',
-      placeholder: 'Last name',
-      value: lastName,
-      set: setLastName,
-      type: 'text',
-    },
-    {
-      name: 'id_card_number',
-      placeholder: 'ID Card Number',
-      value: idCardNumber,
-      set: setIdCardNumber,
-      type: 'text',
-    },
-    {
-      name: 'phone_number',
-      placeholder: 'Phone number',
-      value: phoneNumber,
-      set: setPhoneNumber,
-      type: 'text',
-    },
+    { name: 'confirm_password', placeholder: 'Confirm password', value: confirmPassword, set: setConfirmPassword, type: 'password' },
+    { name: 'email', placeholder: 'Email', value: email, set: setEmail, type: 'text' },
+    { name: 'first_name', placeholder: 'First name', value: firstName, set: setFirstName, type: 'text' },
+    { name: 'last_name', placeholder: 'Last name', value: lastName, set: setLastName, type: 'text' },
+    { name: 'id_card_number', placeholder: 'ID Card Number', value: idCardNumber, set: setIdCardNumber, type: 'text' },
+    { name: 'phone_number', placeholder: 'Phone number', value: phoneNumber, set: setPhoneNumber, type: 'text' },
   ]
-
-  const fields = mode === 'login' ? loginFields : registerFields
 
   return (
     <>
@@ -180,58 +159,101 @@ export default function popup_authentication({
 
       <div className={`auth-modal ${mode} ${closing ? 'closing' : ''}`}>
         <div className="auth-modal-scroll">
-
           <button className="auth-close" onClick={closePopup}>❌</button>
 
-          <h2>{mode === 'login' ? 'เข้าสู่ระบบ' : 'สร้างบัญชีผู้ป่วย'}</h2>
-          <div className="description" style={{ paddingBottom: "16px", textAlign: "center" }}>{mode === 'login' ? 'เข้าสู่ระบบเพื่อจัดการข้อมูลการรักษาและการนัดหมาย' : 'ลงทะเบียนเพื่อเริ่มใช้งานระบบคลินิก'}</div>
+          <h2>
+            {mode === 'login' ? 'เข้าสู่ระบบ'
+              : mode === 'register' ? 'สร้างบัญชีผู้ป่วย'
+              : 'ลืมรหัสผ่าน'}
+          </h2>
 
-          {fields.map((f) => (
-            <div key={f.name} className="field">
-              <input
-                type={f.type}
-                placeholder={f.placeholder}
-                value={f.value}
-                className={fieldErrors[f.name] ? 'error' : ''}
-                onChange={(e) => {
-                  f.set(e.target.value)
-                  setFieldErrors((prev) => ({ ...prev, [f.name]: '' }))
-                }}
-              />
-              {renderFieldError(f.name)}
+          {mode === 'login' && (
+            <div className="description" style={{ textAlign: "center", paddingBottom: 16 }}>
+              เข้าสู่ระบบเพื่อจัดการข้อมูลการรักษาและการนัดหมาย
             </div>
-          ))}
+          )}
+
+          {(mode === 'login' || mode === 'register') && (
+            <>
+              {(mode === 'login' ? loginFields : registerFields).map(f => (
+                <div key={f.name} className="field">
+                  <input
+                    type={f.type}
+                    placeholder={f.placeholder}
+                    value={f.value}
+                    className={fieldErrors[f.name] ? 'error' : ''}
+                    onChange={(e) => {
+                      f.set(e.target.value)
+                      setFieldErrors(prev => ({ ...prev, [f.name]: '' }))
+                    }}
+                  />
+                  {renderFieldError(f.name)}
+                </div>
+              ))}
+            </>
+          )}
 
           {mode === 'register' && (
             <>
-              <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
-              <select value={gender} onChange={(e) => setGender(e.target.value)}>
+              <input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} />
+              <select value={gender} onChange={e => setGender(e.target.value)}>
                 <option value="">Select gender</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
-                <option value="other">Other</option>
               </select>
             </>
           )}
 
+          {mode === 'forgot' && (
+            <>
+              <input
+                type="text"
+                placeholder="อีเมลของคุณ"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+              />
+              <input
+                type="password"
+                placeholder="รหัสผ่านใหม่"
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+              />
+            </>
+          )}
+
           {error && <p className="error">{error}</p>}
+
           <div className="auth-button">
-            {mode === 'login' ? (
+            {mode === 'login' && (
               <button disabled={loading} onClick={handleLogin}>
                 {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
               </button>
-            ) : (
+            )}
+            {mode === 'register' && (
               <button disabled={loading} onClick={handleRegister}>
                 {loading ? 'กำลังสร้างบัญชี...' : 'สร้างบัญชี'}
               </button>
             )}
+            {mode === 'forgot' && (
+              <button disabled={loading} onClick={handleForgotPassword}>
+                {loading ? 'กำลังรีเซ็ตรหัสผ่าน...' : 'รีเซ็ตรหัสผ่าน'}
+              </button>
+            )}
           </div>
 
-          <p className="switch">
-            {mode === 'login'
-              ? <>ยังไม่มีบํญชี? <span onClick={() => switchMode('register')}>สมัครใช้งาน</span></>
-              : <>มีบัญชีอยูแล้ว? <span onClick={() => switchMode('login')}>เข้าสู่ระบบ</span></>
-            }
+          <p className="switch" style={{ textAlign: 'center' }}>
+            {mode === 'login' && (
+              <>
+                ยังไม่มีบํญชี? <span onClick={() => switchMode('register')}>สมัครใช้งาน</span> |{' '}
+                <span onClick={() => switchMode('forgot')}>ลืมรหัสผ่าน?</span>
+              </>
+            )}
+            {mode === 'register' && (
+              <>มีบัญชีอยูแล้ว? <span onClick={() => switchMode('login')}>เข้าสู่ระบบ</span></>
+            )}
+            {mode === 'forgot' && (
+              <>กลับไปเข้าสู่ระบบ? <span onClick={() => switchMode('login')}>เข้าสู่ระบบ</span></>
+            )}
           </p>
         </div>
       </div>

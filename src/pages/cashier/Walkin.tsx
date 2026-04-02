@@ -258,19 +258,60 @@ export default function WalkIn() {
                             onChange={(e) => setPatientId(Number(e.target.value))}
                         />
                     </div>
+                    {/* ===================== */}
+                    {/* MONTH HEADER */}
+                    {/* ===================== */}
+                    <div className="calendar-header">
+                        <button className="nav-btn" onClick={() => {
+                            const date = new Date(currentMonth + "-01");
+                            date.setMonth(date.getMonth() - 1);
+                            setCurrentMonth(date.toISOString().slice(0, 7));
+                        }}>‹</button>
 
-                    <div className="calendar-grid">
-                        {calendarDays.map(day => (
-                            <button
-                                key={day.date}
-                                disabled={day.disabled}
-                                className={`calendar-day ${selectedDate === day.date ? "active" : ""}`}
-                                onClick={() => { setSelectedDate(day.date); setSelectedTime(null) }}
-                            >
-                                {day.day}
-                            </button>
-                        ))}
+                        <div className="month-label">
+                            {new Date(currentMonth + "-01").toLocaleDateString("th-TH", {
+                                month: "long",
+                                year: "numeric",
+                            })}
+                        </div>
+
+                        <button className="nav-btn" onClick={() => {
+                            const date = new Date(currentMonth + "-01");
+                            date.setMonth(date.getMonth() + 1);
+                            setCurrentMonth(date.toISOString().slice(0, 7));
+                        }}>›</button>
                     </div>
+                    {/* ===================== */}
+                    {/* STEP 1: CALENDAR */}
+                    {/* ===================== */}
+                    {!hasAvailableDay ? (
+
+                        <div className="no-available">
+                            ❌ ไม่มีคิวว่างในเดือนนี้<br />
+                            กรุณาเลือกเดือนอื่น
+                        </div>
+
+                    ) : (
+
+                        <div className="calendar-grid">
+                            {calendarDays.map(day => (
+                                <button
+                                    key={day.date}
+                                    disabled={day.disabled}
+                                    className={`calendar-day 
+                                    ${selectedDate === day.date ? "active" : ""}
+                                    `}
+                                    onClick={() => {
+                                        setSelectedDate(day.date)
+                                        setSelectedTime(null)
+                                    }}
+                                >
+                                    {day.day}
+                                </button>
+                            ))}
+                        </div>
+
+                    )}
 
                     {selectedDate && (
                         <div className="time-grid">
