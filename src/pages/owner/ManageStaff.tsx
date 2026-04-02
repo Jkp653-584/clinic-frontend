@@ -141,7 +141,6 @@ export default function ManageStaff() {
             {openId === e.id && (
               <div className="expand-box">
 
-                <p>ตำแหน่ง: {e.position}</p>
                 <p>เบอร์: {e.phone}</p>
                 <p>อีเมล: {e.email}</p>
                 <p>เลขบัตร: {e.id_card}</p>
