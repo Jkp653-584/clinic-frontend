@@ -10,7 +10,7 @@ export default function PopupAuthentication({
   onAuthSuccess: () => void
   onClose: () => void
 }) {
-  const { loginApi, registerApi, updatePasswordApi } = useApi()
+  const { loginApi, registerApi, updatePasswordApi, requestOtpApi } = useApi()
 
   const [mode, setMode] = useState<Mode>('login')
   const [loading, setLoading] = useState(false)
@@ -30,7 +30,10 @@ export default function PopupAuthentication({
   const [birthDate, setBirthDate] = useState('')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [gender, setGender] = useState('')
+
+  // 🔥 Forgot/Reset fields
   const [newPassword, setNewPassword] = useState('')
+  const [otp, setOtp] = useState('')
 
   function closePopup() {
     setClosing(true)
@@ -46,6 +49,7 @@ export default function PopupAuthentication({
     setConfirmPassword('')
     setEmail('')
     setNewPassword('')
+    setOtp('')
   }
 
   function renderFieldError(name: string) {
@@ -107,24 +111,36 @@ export default function PopupAuthentication({
     }
   }
 
-  /* ---------------- FORGOT PASSWORD ---------------- */
-  async function handleForgotPassword() {
-    if (!email || !newPassword) {
-      setError('กรุณากรอกอีเมลและรหัสผ่านใหม่')
+  /* ---------------- FORGOT / RESET PASSWORD ---------------- */
+  const handleRequestOtp = async () => {
+    if (!email) {
+      setError('กรุณากรอกอีเมล')
+      return
+    }
+    try {
+      setLoading(true)
+      await requestOtpApi(email)
+      alert('ส่ง OTP ไปยังอีเมลเรียบร้อย 📧')
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResetPassword = async () => {
+    if (!email || !newPassword || !otp) {
+      setError('กรุณากรอกอีเมล, OTP และรหัสผ่านใหม่')
       return
     }
 
     try {
       setLoading(true)
-      setError('')
-      setFieldErrors({})
-
       await updatePasswordApi({
         email,
         new_password: newPassword,
-        old_password: '', // ส่งเป็น empty สำหรับ forgot password
+        otp,
       })
-
       alert('รีเซ็ตรหัสผ่านสำเร็จ 🎉')
       switchMode('login')
     } catch (err: any) {
@@ -164,7 +180,7 @@ export default function PopupAuthentication({
           <h2>
             {mode === 'login' ? 'เข้าสู่ระบบ'
               : mode === 'register' ? 'สร้างบัญชีผู้ป่วย'
-              : 'ลืมรหัสผ่าน'}
+                : 'รีเซ็ตรหัสผ่าน'}
           </h2>
 
           {mode === 'login' && (
@@ -206,11 +222,23 @@ export default function PopupAuthentication({
 
           {mode === 'forgot' && (
             <>
+              <div className="field-email-otp">
+                <input
+                  type="text"
+                  placeholder="อีเมลของคุณ"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                />
+                <button style={{ marginBottom: '8px' }} onClick={handleRequestOtp} disabled={loading}>
+                  ขอ OTP
+                </button>
+              </div>
+
               <input
                 type="text"
-                placeholder="อีเมลของคุณ"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+                placeholder="OTP"
+                value={otp}
+                onChange={e => setOtp(e.target.value)}
               />
               <input
                 type="password"
@@ -235,7 +263,7 @@ export default function PopupAuthentication({
               </button>
             )}
             {mode === 'forgot' && (
-              <button disabled={loading} onClick={handleForgotPassword}>
+              <button disabled={loading} onClick={handleResetPassword}>
                 {loading ? 'กำลังรีเซ็ตรหัสผ่าน...' : 'รีเซ็ตรหัสผ่าน'}
               </button>
             )}

@@ -5,13 +5,14 @@ import { useToast } from "../components/ToastContext"
 
 export default function Settings({ user }: { user: User }) {
   const { showToast } = useToast()
-  const { updatePasswordApi } = useApi()
+  const { updatePasswordApi, requestOtpApi } = useApi()
 
   const [oldPassword, setOldPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
 
-  const [resetNewPassword, setResetNewPassword] = useState("") // 🔥 สำหรับ reset
-  const [showResetForm, setShowResetForm] = useState(false) // 🔥 toggle reset
+  const [resetNewPassword, setResetNewPassword] = useState("")
+  const [otp, setOtp] = useState("") // 🔥 OTP สำหรับ reset
+  const [showResetForm, setShowResetForm] = useState(false)
 
   const [showChangePassword, setShowChangePassword] = useState(false)
 
@@ -39,7 +40,6 @@ export default function Settings({ user }: { user: User }) {
       setOldPassword("")
       setNewPassword("")
       setShowChangePassword(false)
-
     } catch (error: any) {
       showToast("error", error.message || "เกิดข้อผิดพลาด")
     } finally {
@@ -50,24 +50,39 @@ export default function Settings({ user }: { user: User }) {
   /* ===================== */
   /* 📧 RESET PASSWORD */
   /* ===================== */
+  const handleRequestOtp = async () => {
+    if (!user.email) return
+    try {
+      setLoading(true)
+      await requestOtpApi(user.email)
+      showToast("success", "ส่ง OTP ไปยังอีเมลเรียบร้อย 📧")
+    } catch (error: any) {
+      showToast("error", error.message || "เกิดข้อผิดพลาด")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleResetPassword = async () => {
-    if (!resetNewPassword) {
-      return showToast("error", "กรุณากรอกรหัสใหม่")
+    if (!resetNewPassword || !otp) {
+      return showToast("error", "กรุณากรอกรหัสใหม่และ OTP")
     }
 
     try {
       setLoading(true)
 
+      // 🔥 แบบเดียวกับ authpop: reset password ส่ง email + new_password + otp ไม่ใช้ token
       await updatePasswordApi({
         email: user.email,
         new_password: resetNewPassword,
+        otp,
       })
 
-      showToast("success", "รีเซ็ตรหัสผ่านและส่งไปยังอีเมลแล้ว 📧")
+      showToast("success", "รีเซ็ตรหัสผ่านสำเร็จ 🎉")
 
       setResetNewPassword("")
+      setOtp("")
       setShowResetForm(false)
-
     } catch (error: any) {
       showToast("error", error.message || "เกิดข้อผิดพลาด")
     } finally {
@@ -76,33 +91,31 @@ export default function Settings({ user }: { user: User }) {
   }
 
   return (
-
     <div className="settings-container">
-
       <h1 className="settings-title">ตั้งค่า</h1>
 
       {/* ===================== */}
       {/* 📧 RESET PASSWORD */}
       {/* ===================== */}
-
       <div className="settings-section">
-
         <h2>รีเซ็ตรหัสผ่าน</h2>
 
         {!showResetForm && (
-          <button
-            className="reset-btn"
-            onClick={() => setShowResetForm(true)}
-          >
+          <button className="reset-btn" onClick={() => setShowResetForm(true)}>
             รีเซ็ตรหัสผ่าน
           </button>
         )}
 
         {showResetForm && (
           <>
-            <div className="form-group">
+            <div className="form-group form-group-email-otp">
               <label>อีเมล</label>
-              <input value={user.email} disabled />
+              <div className="email-otp-row">
+                <input value={user.email} disabled />
+                <button onClick={handleRequestOtp} disabled={loading}>
+                  ขอ OTP
+                </button>
+              </div>
             </div>
 
             <div className="form-group">
@@ -114,9 +127,14 @@ export default function Settings({ user }: { user: User }) {
               />
             </div>
 
-            <p className="hint-text">
-              ระบบจะบันทึกรหัสใหม่นี้และส่งไปยังอีเมลของคุณ
-            </p>
+            <div className="form-group">
+              <label>OTP</label>
+              <input
+                type="text"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+              />
+            </div>
 
             <div className="button-row">
               <button
@@ -132,6 +150,7 @@ export default function Settings({ user }: { user: User }) {
                 onClick={() => {
                   setShowResetForm(false)
                   setResetNewPassword("")
+                  setOtp("")
                 }}
               >
                 ยกเลิก
@@ -139,22 +158,16 @@ export default function Settings({ user }: { user: User }) {
             </div>
           </>
         )}
-
       </div>
 
       {/* ===================== */}
       {/* 🔐 CHANGE PASSWORD */}
       {/* ===================== */}
-
       <div className="settings-section">
-
         <h2>เปลี่ยนรหัสผ่าน</h2>
 
         {!showChangePassword && (
-          <button
-            className="edit-btn"
-            onClick={() => setShowChangePassword(true)}
-          >
+          <button className="edit-btn" onClick={() => setShowChangePassword(true)}>
             เปลี่ยนรหัสผ่าน
           </button>
         )}
@@ -166,7 +179,7 @@ export default function Settings({ user }: { user: User }) {
               <input
                 type="password"
                 value={oldPassword}
-                onChange={(e)=>setOldPassword(e.target.value)}
+                onChange={(e) => setOldPassword(e.target.value)}
               />
             </div>
 
@@ -175,7 +188,7 @@ export default function Settings({ user }: { user: User }) {
               <input
                 type="password"
                 value={newPassword}
-                onChange={(e)=>setNewPassword(e.target.value)}
+                onChange={(e) => setNewPassword(e.target.value)}
               />
             </div>
 
@@ -201,9 +214,7 @@ export default function Settings({ user }: { user: User }) {
             </div>
           </>
         )}
-
       </div>
-
     </div>
   )
 }

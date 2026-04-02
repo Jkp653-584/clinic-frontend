@@ -36,7 +36,6 @@ export default function ManageStaff() {
       phone: e.phone_number,
       email: e.email,
       id_card: e.id_card_number,
-      position: e.position,
     }))
 
     setEmployees(mapped)
@@ -50,7 +49,6 @@ export default function ManageStaff() {
     try {
       await createStaffApi({
         ...form,
-        position: "Staff",
       })
 
       alert("เพิ่มพนักงานสำเร็จ")
@@ -141,7 +139,6 @@ export default function ManageStaff() {
             {openId === e.id && (
               <div className="expand-box">
 
-                <p>ตำแหน่ง: {e.position}</p>
                 <p>เบอร์: {e.phone}</p>
                 <p>อีเมล: {e.email}</p>
                 <p>เลขบัตร: {e.id_card}</p>

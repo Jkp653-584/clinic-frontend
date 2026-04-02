@@ -333,12 +333,27 @@ export function useApi() {
 
       return data
     },
+    /* ---------------- REQUEST OTP ---------------- */
+    requestOtpApi: async (email: string) => {
+      const res = await fetchWithLoading(`${API_BASE_URL}/auth/request-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message || "Request OTP failed")
+      return data
+    },
+
+    /* ---------------- UPDATE / RESET PASSWORD ---------------- */
     updatePasswordApi: async (payload: {
       email: string
       new_password: string
+      otp?: string
       old_password?: string
     }) => {
-      // 🔥 ถ้า old_password มีค่า → change password, ต้องมี token
+      // 🔥 ถ้า old_password มีค่า → change password (ต้องมี token)
+      // 🔥 ถ้า otp มีค่า → forgot/reset password (ไม่ต้องใช้ token)
       const isChange = !!payload.old_password
       const token = isChange ? localStorage.getItem("token") : null
 
@@ -346,9 +361,7 @@ export function useApi() {
         "Content-Type": "application/json",
       }
 
-      if (isChange && token) {
-        headers["Authorization"] = `Bearer ${token}`
-      }
+      if (isChange && token) headers["Authorization"] = `Bearer ${token}`
 
       const res = await fetchWithLoading(`${API_BASE_URL}/auth/update-password`, {
         method: "POST",
@@ -363,10 +376,7 @@ export function useApi() {
         throw new Error("Unauthorized")
       }
 
-      if (!res.ok) {
-        throw new Error(data.message || "Update password failed")
-      }
-
+      if (!res.ok) throw new Error(data.message || "Update password failed")
       return data
     },
     /* ---------- PATIENT: APPOINTMENT ---------- */

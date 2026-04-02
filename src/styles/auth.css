@@ -185,3 +185,31 @@
   cursor: pointer;
   margin-left: 5px;
 }
+
+/* Email + OTP row (override .field default flex-direction) */
+.field-email-otp {
+  display: flex;
+  flex-direction: row; /* บังคับเป็น row */
+  align-items: center; /* จัดให้อยู่กลางแนวตั้ง */
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.field-email-otp input {
+  flex: 1; /* กินพื้นที่ที่เหลือ */
+}
+
+.field-email-otp button:disabled {
+  background-color: #a5b4fc;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .field-email-otp {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .field-email-otp button {
+    width: 100%;
+  }
+}
