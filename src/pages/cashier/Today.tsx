@@ -1,8 +1,8 @@
-import { useState, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useApi } from "../../api"
 
+/* ---------- TYPE ---------- */
 type Status =
-  | "booked"
   | "awaiting_checkin"
   | "checked_in"
   | "in_progress"
@@ -12,189 +12,213 @@ type Status =
 
 type Appointment = {
   id: number
+  date: string
   time: string
   patient: string
+  symptom: string
   status: Status
 }
 
+/* ---------- STATUS TEXT ---------- */
 const statusText: Record<Status, string> = {
-  booked: "นัดแล้ว",
   awaiting_checkin: "รอเช็คอิน",
-  checked_in: "เช็คอินแล้ว",
+  checked_in: "รอเรียก",
   in_progress: "กำลังตรวจ",
   dispensing: "รอจ่ายยา",
   completed: "เสร็จแล้ว",
   cancelled: "ยกเลิก"
 }
 
+/* ---------- MAP API ---------- */
+const mapAppointment = (a: any): Appointment => ({
+  id: a.appointment_id,
+  date: a.appointment_date,
+  time: a.start_time.slice(0, 5),
+  patient: a.patient_fullname,
+  symptom: a.symptoms,
+  status: a.status
+})
+
 export default function Today() {
-  const { updateAppointmentStatusApi } = useApi()
+  const { getAllAppointmentsApi, updateAppointmentStatusApi } = useApi()
+  const [data, setData] = useState<Appointment[]>([])
+  const [filter, setFilter] = useState<Status | "all">("all")
+  const [selected, setSelected] = useState<{
+    id: number
+    type: "checkin" | "cancel" | "dispensed"
+  } | null>(null)
 
-  const [filter, setFilter] = useState<
-    "all" | "awaiting_checkin" | "checked_in" | "cancelled"
-  >("all")
+  /* ---------- FETCH ---------- */
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getAllAppointmentsApi()
+        setData(res.map(mapAppointment))
+      } catch (err) {
+        console.error(err)
+      }
+    }
+    fetchData()
+  }, [])
 
-  const [loadingId, setLoadingId] = useState<number | null>(null)
+  /* ---------- TODAY FILTER ---------- */
+  const today = new Date().toLocaleDateString("sv-SE")
+  const visibleStatuses: Status[] = [
+    "awaiting_checkin",
+    "checked_in",
+    "in_progress",
+    "dispensing",
+    "completed",
+    "cancelled"
+  ]
 
-  const [data, setData] = useState<Appointment[]>([
-    { id: 1, time: "09:00", patient: "สมชาย", status: "awaiting_checkin" },
-    { id: 2, time: "09:30", patient: "อรทัย", status: "checked_in" },
-    { id: 3, time: "10:00", patient: "ธนา", status: "awaiting_checkin" },
-    { id: 4, time: "10:30", patient: "กนก", status: "cancelled" },
-  ])
+  const todayData = useMemo(
+    () =>
+      data
+        .filter(d => d.date === today)
+        .filter(d => visibleStatuses.includes(d.status)),
+    [data]
+  )
 
-  /* COUNT */
+  /* ---------- COUNT ---------- */
   const counts = useMemo(() => {
     const c: Record<string, number> = {}
-    data.forEach(d => {
-      if (["awaiting_checkin", "checked_in", "cancelled"].includes(d.status)) {
-        c[d.status] = (c[d.status] || 0) + 1
-      }
+    todayData.forEach(d => {
+      c[d.status] = (c[d.status] || 0) + 1
     })
     return c
-  }, [data])
+  }, [todayData])
 
-  /* FILTER */
-  const filtered =
-    filter === "all"
-      ? data
-      : data.filter(d => d.status === filter)
+  /* ---------- FILTER ---------- */
+  const filtered = filter === "all" ? todayData : todayData.filter(d => d.status === filter)
 
-  /* 🔥 ACTION (FIXED) */
-  const updateStatus = async (
-    id: number,
-    status: "checked_in" | "cancelled"
-  ) => {
+  /* ---------- ACTION ---------- */
+  const confirmAction = async () => {
+    if (!selected) return
     try {
-      setLoadingId(id)
+      let newStatus: Status
+      if (selected.type === "checkin") newStatus = "checked_in"
+      else if (selected.type === "cancel") newStatus = "cancelled"
+      else newStatus = "completed" // dispensing → completed
 
-      // ✅ FIX: ส่ง status ตรงๆ
-      await updateAppointmentStatusApi(id, status)
-
-      // ✅ update UI
+      await updateAppointmentStatusApi(selected.id, newStatus)
       setData(prev =>
-        prev.map(a =>
-          a.id === id ? { ...a, status } : a
-        )
+        prev.map(d => (d.id === selected.id ? { ...d, status: newStatus } : d))
       )
+      setSelected(null)
     } catch (err: any) {
-      console.error(err)
-
-      // 🔥 UX ดีกว่า alert ธรรมดา
-      alert(err.message || "อัปเดตสถานะไม่สำเร็จ")
-    } finally {
-      setLoadingId(null)
+      alert(err.message)
     }
   }
 
   return (
     <div className="appointment-page">
+      <h1>นัดหมายวันนี้</h1>
 
-      <h1>เช็คอินผู้ป่วยวันนี้</h1>
-
-      {/* FILTER */}
       <div className="appointment-filters">
-
         <button
           onClick={() => setFilter("all")}
           className={`filter-btn ${filter === "all" ? "active" : ""}`}
         >
-          ทั้งหมด ({data.length})
+          ทั้งหมด ({todayData.length})
         </button>
-
         <button
           onClick={() => setFilter("awaiting_checkin")}
           className={`filter-btn ${filter === "awaiting_checkin" ? "active" : ""}`}
         >
           รอเช็คอิน ({counts.awaiting_checkin || 0})
         </button>
-
         <button
           onClick={() => setFilter("checked_in")}
           className={`filter-btn ${filter === "checked_in" ? "active" : ""}`}
         >
-          เช็คอินแล้ว ({counts.checked_in || 0})
+          รอเรียก ({counts.checked_in || 0})
         </button>
-
         <button
-          onClick={() => setFilter("cancelled")}
-          className={`filter-btn ${filter === "cancelled" ? "active" : ""}`}
+          onClick={() => setFilter("in_progress")}
+          className={`filter-btn ${filter === "in_progress" ? "active" : ""}`}
         >
-          ยกเลิก ({counts.cancelled || 0})
+          กำลังตรวจ ({counts.in_progress || 0})
         </button>
-
+        <button
+          onClick={() => setFilter("dispensing")}
+          className={`filter-btn ${filter === "dispensing" ? "active" : ""}`}
+        >
+          รอจ่ายยา ({counts.dispensing || 0})
+        </button>
       </div>
 
-      {/* TABLE */}
       <div className="appointment-table-wrapper">
         <table className="appointment-table">
-
           <thead>
             <tr>
               <th>เวลา</th>
               <th>ผู้ป่วย</th>
+              <th>อาการ</th>
               <th>สถานะ</th>
               <th>จัดการ</th>
             </tr>
           </thead>
-
           <tbody>
-
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={4} className="empty">
+                <td colSpan={5} className="empty">
                   ไม่มีข้อมูล
                 </td>
               </tr>
             )}
-
-            {filtered.map((a) => (
+            {filtered.map(a => (
               <tr key={a.id}>
-
                 <td>{a.time}</td>
                 <td>{a.patient}</td>
-
-                <td className={`status status-${a.status}`}>
-                  {statusText[a.status]}
-                </td>
-
+                <td>{a.symptom}</td>
+                <td className={`status status-${a.status}`}>{statusText[a.status]}</td>
                 <td>
                   {a.status === "awaiting_checkin" && (
                     <>
-                      <button
-                        disabled={loadingId === a.id}
-                        onClick={() => updateStatus(a.id, "checked_in")}
-                      >
-                        {loadingId === a.id ? "..." : "เช็คอิน"}
+                      <button onClick={() => setSelected({ id: a.id, type: "checkin" })}>
+                        เช็คอิน
                       </button>
-
                       <button
                         className="action-cancel"
-                        disabled={loadingId === a.id}
-                        onClick={() => updateStatus(a.id, "cancelled")}
+                        onClick={() => setSelected({ id: a.id, type: "cancel" })}
                       >
-                        ไม่มา
+                        ยกเลิก
                       </button>
                     </>
                   )}
-
-                  {a.status === "checked_in" && (
-                    <span style={{ color: "#6b7280" }}>รอหมอ</span>
+                  {a.status === "dispensing" && (
+                    <button onClick={() => setSelected({ id: a.id, type: "dispensed" })}>
+                      จ่ายยาแล้ว
+                    </button>
                   )}
-
-                  {a.status === "cancelled" && (
-                    <span style={{ color: "#6b7280" }}>ยกเลิกแล้ว</span>
-                  )}
+                  {a.status !== "awaiting_checkin" && a.status !== "dispensing" && "-"}
                 </td>
-
               </tr>
             ))}
-
           </tbody>
-
         </table>
       </div>
 
+      {selected && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>
+              {selected.type === "checkin"
+                ? "ยืนยันเช็คอิน?"
+                : selected.type === "cancel"
+                ? "ยืนยันยกเลิก?"
+                : "ยืนยันจ่ายยา?"}
+            </h3>
+            <div className="modal-actions">
+              <button className="btn-cancel" onClick={() => setSelected(null)}>
+                ย้อนกลับ
+              </button>
+              <button className="btn-confirm" onClick={confirmAction}>ยืนยัน</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

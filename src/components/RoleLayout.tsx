@@ -10,6 +10,7 @@ import TodayCashier from '../pages/cashier/Today'
 import AllCashier from '../pages/cashier/All'
 import SearchCashier from '../pages/cashier/Search'
 import IncidentReport from '../pages/cashier/Incident'
+import WalkIn from '../pages/cashier/Walkin'
 
 import TodayQueue from '../pages/doctor/TodayQueue'
 import Calendar from '../pages/doctor/Calendar'
@@ -52,6 +53,7 @@ export default function RoleLayout({
         { key: 'today', label: 'นัดหมายวันนี้' },
         { key: 'all', label: 'นัดหมายทั้งหมด' },
         { key: 'search', label: 'ค้นหาคนไข้' },
+        { key: 'walkin', label: 'รับคนไข้หน้างาน' },
         { key: 'incident', label: 'รายงานเหตุการณ์' },
         { key: 'settings', label: 'ตั้งค่า' },
       ],
@@ -179,6 +181,7 @@ export default function RoleLayout({
           {page === 'all' && user.role === 'staff' && <AllCashier />}
           {page === 'search' && user.role === 'staff' && <SearchCashier />}
           {page === 'incident' && user.role === 'staff' && <IncidentReport />}
+          {page === 'walkin' && user.role === 'staff' && <WalkIn />}
 
           {/* doctor pages */}
           {page === 'todayQueue' && user.role === 'doctor' && <TodayQueue />}

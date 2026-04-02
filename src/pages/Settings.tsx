@@ -79,91 +79,11 @@ export default function Settings({ user }: { user: User }) {
     }
   }
 
-  /* ===================== */
-  /* 🔔 NOTIFY */
-  /* ===================== */
-  const handleSaveNotify = () => {
-    console.log("notify:", notifyType)
-    showToast("success", "บันทึกการตั้งค่าแจ้งเตือนแล้ว")
-    setIsEditing(false)
-  }
-
   return (
 
     <div className="settings-container">
 
       <h1 className="settings-title">ตั้งค่า</h1>
-
-      {/* ===================== */}
-      {/* 🔔 NOTIFY */}
-      {/* ===================== */}
-
-      {user.role === "patient" && (
-
-        <div className="settings-section">
-
-          <div className="settings-header-row">
-            <h2>ตั้งค่าแจ้งเตือนการนัดหมาย</h2>
-
-            {!isEditing ? (
-              <button
-                className="edit-btn small"
-                onClick={() => setIsEditing(true)}
-              >
-                แก้ไข
-              </button>
-            ) : (
-              <div className="inline-actions">
-                <button className="save-btn small" onClick={handleSaveNotify}>
-                  บันทึก
-                </button>
-                <button
-                  className="cancel-btn small"
-                  onClick={() => setIsEditing(false)}
-                >
-                  ยกเลิก
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="notify-options">
-
-            <label>
-              <input
-                type="radio"
-                disabled={!isEditing}
-                checked={notifyType === "email"}
-                onChange={() => setNotifyType("email")}
-              />
-              อีเมล
-            </label>
-
-            <label>
-              <input
-                type="radio"
-                disabled={!isEditing}
-                checked={notifyType === "phone"}
-                onChange={() => setNotifyType("phone")}
-              />
-              เบอร์โทร
-            </label>
-
-            <label>
-              <input
-                type="radio"
-                disabled={!isEditing}
-                checked={notifyType === "off"}
-                onChange={() => setNotifyType("off")}
-              />
-              ปิดแจ้งเตือน
-            </label>
-
-          </div>
-
-        </div>
-
-      )}
 
       {/* ===================== */}
       {/* 📧 RESET PASSWORD */}

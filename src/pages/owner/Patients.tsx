@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react"
 import { useApi } from "../../api"
 
+type MedicalRecord = {
+  record_id: number
+  appointment_date: string
+  doctor_name: string
+  symptoms: string
+  diagnosis: string
+  treatment_plan: string
+}
+
 type Patient = {
   id: string
   first_name: string
@@ -11,6 +20,7 @@ type Patient = {
   gender: string
   blood_group: string
   id_card: string
+  medical_records: MedicalRecord[]
 }
 
 export default function OwnerPatients() {
@@ -24,25 +34,23 @@ export default function OwnerPatients() {
     const fetch = async () => {
       try {
         const data = await getPatientsApi()
-
         const mapped = data.map((p: any) => ({
-          id: p.patient_display_id,
+          id: p.formatted_patient_id,
           first_name: p.first_name,
           last_name: p.last_name,
           phone: p.phone_number,
           email: p.email,
           birth_date: p.birth_date,
           gender: p.gender,
-          blood_group: p.blood_group,
+          blood_group: p.blood_group ?? "-",
           id_card: p.id_card_number,
+          medical_records: p.medical_records ?? [],
         }))
-
         setPatients(mapped)
       } catch (err) {
         console.error(err)
       }
     }
-
     fetch()
   }, [])
 
@@ -51,8 +59,7 @@ export default function OwnerPatients() {
   )
 
   return (
-    <div className="list-container">
-
+    <div className="patients-page list-container">
       <h2 className="section-header">รายชื่อคนไข้</h2>
 
       <div className="search-box">
@@ -65,22 +72,19 @@ export default function OwnerPatients() {
 
       <div className="list-box">
         {filtered.map(p => (
-          <div key={p.id} className="list-item-wrapper">
+          <div key={p.id} className="patients-list-item-wrapper">
 
-            {/* ROW */}
             <div
-              className="list-item"
+              className="patients-list-item"
               onClick={() => setOpenId(openId === p.id ? null : p.id)}
             >
-              <span>{p.id}</span>
-              <span>{p.first_name} {p.last_name}</span>
-              <span>{openId === p.id ? "▲" : "▼"}</span>
+              <span className="id">{p.id}</span>
+              <span className="name">{p.first_name} {p.last_name}</span>
+              <span className="arrow">{openId === p.id ? "▲" : "▼"}</span>
             </div>
 
-            {/* EXPAND */}
             {openId === p.id && (
               <div className="expand-box">
-
                 <p>เบอร์: {p.phone}</p>
                 <p>อีเมล: {p.email}</p>
                 <p>วันเกิด: {p.birth_date}</p>
@@ -88,13 +92,27 @@ export default function OwnerPatients() {
                 <p>กรุ๊ปเลือด: {p.blood_group}</p>
                 <p>เลขบัตร: {p.id_card}</p>
 
+                <div className="medical-records-container">
+                  <h4>Medical Records</h4>
+                  {p.medical_records.length === 0 && <p>ไม่มีประวัติ</p>}
+                  {p.medical_records.map((m) => (
+                    <div key={m.record_id} className="medical-record">
+                      <p>วันที่นัด: {m.appointment_date}</p>
+                      <p>แพทย์: {m.doctor_name}</p>
+                      <p>อาการ: {m.symptoms}</p>
+                      <p>วินิจฉัย: {m.diagnosis}</p>
+                      <p>แผนการรักษา: {m.treatment_plan}</p>
+                      <hr/>
+                    </div>
+                  ))}
+                </div>
+
               </div>
             )}
 
           </div>
         ))}
       </div>
-
     </div>
   )
 }

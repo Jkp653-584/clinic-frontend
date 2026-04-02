@@ -1,51 +1,50 @@
-import { useState, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useApi } from "../../api"
 
 /* ---------- TYPE ---------- */
 
 type Patient = {
   id: string
-  gender: string
   name: string
   phone: string
-  lastVisit: string
+  gender: string
   nextAppointment: string | null
 }
 
+/* ---------- MAP ---------- */
+
+const mapPatient = (p: any): Patient => ({
+  id: p.formatted_patient_id,
+  name: p.fullname,
+  phone: p.phone_number,
+  gender: p.gender,
+  nextAppointment: p.appointment_dates?.[0] || null
+})
+
 export default function Search() {
 
+  const { getActivePatientsApi } = useApi()
+
+  const [patients, setPatients] = useState<Patient[]>([])
   const [search, setSearch] = useState("")
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
-  /* ---------- MOCK DATA ---------- */
+  /* ---------- FETCH ---------- */
 
-  const patients: Patient[] = [
-    {
-      id: "PT-001",
-      gender: "ชาย",
-      name: "สมชาย ใจดี",
-      phone: "0123456789",
-      lastVisit: "2026-03-20",
-      nextAppointment: "2026-04-02"
-    },
-    {
-      id: "PT-002",
-      gender: "หญิง",
-      name: "สมหญิง",
-      phone: "1234567890",
-      lastVisit: "2026-03-21",
-      nextAppointment: null
-    },
-    {
-      id: "PT-003",
-      gender: "หญิง",
-      name: "อรทัย",
-      phone: "2345678901",
-      lastVisit: "2026-03-22",
-      nextAppointment: "2026-04-05"
-    },
-  ]
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getActivePatientsApi()
+        setPatients(res.map(mapPatient))
+      } catch (err) {
+        console.error(err)
+      }
+    }
+
+    fetchData()
+  }, [])
 
   /* ---------- FILTER + SORT ---------- */
 
@@ -61,16 +60,20 @@ export default function Search() {
           p.phone.includes(keyword)
 
         const matchStart =
-          !startDate || p.lastVisit >= startDate
+          !startDate || (p.nextAppointment && p.nextAppointment >= startDate)
 
         const matchEnd =
-          !endDate || p.lastVisit <= endDate
+          !endDate || (p.nextAppointment && p.nextAppointment <= endDate)
 
         return matchSearch && matchStart && matchEnd
       })
-      .sort((a, b) => b.lastVisit.localeCompare(a.lastVisit))
+      .sort((a, b) => {
+        if (!a.nextAppointment) return 1
+        if (!b.nextAppointment) return -1
+        return b.nextAppointment.localeCompare(a.nextAppointment)
+      })
 
-  }, [search, startDate, endDate])
+  }, [patients, search, startDate, endDate])
 
   /* ---------- COPY ---------- */
 
@@ -131,17 +134,15 @@ export default function Search() {
               <th>รหัส</th>
               <th>ชื่อ</th>
               <th>เบอร์</th>
-              <th>นัดล่าสุด</th>
               <th>นัดถัดไป</th>
             </tr>
           </thead>
 
           <tbody>
 
-            {/* EMPTY */}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="empty">
+                <td colSpan={4} className="empty">
                   ไม่พบข้อมูล
                 </td>
               </tr>
@@ -168,8 +169,6 @@ export default function Search() {
                     {copiedId === p.id ? "✔" : "📋"}
                   </button>
                 </td>
-
-                <td>{p.lastVisit}</td>
 
                 <td
                   style={{

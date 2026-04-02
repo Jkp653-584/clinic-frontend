@@ -1,4 +1,5 @@
-const API_BASE_URL = 'https://project-wah5.onrender.com'
+const API_BASE_URL = 'http://127.0.0.1:8000'
+// const API_BASE_URL = 'https://project-wah5.onrender.com'
 import type { User } from './App'
 import { useFetchWithLoading } from './components/fetchWithLoading'
 
@@ -512,7 +513,318 @@ export function useApi() {
       }
 
       return data
+    },// =============================
+    // 📅 APPOINTMENT API
+    // =============================
+
+    // 🔥 ดึงนัดหมายทั้งหมด (staff ใช้ Today + All)
+    getAllAppointmentsApi: async () => {
+      const token = localStorage.getItem("token")
+
+      const res = await fetchWithLoading(
+        `${API_BASE_URL}/appointment/all`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      const data = await res.json()
+
+      if (res.status === 401) {
+        localStorage.removeItem("token")
+        throw new Error("Unauthorized")
+      }
+
+      if (!res.ok) {
+        throw new Error(data.message || "Fetch appointments failed")
+      }
+
+      return data.data
+    },
+
+    // =============================
+    // 👤 PATIENT (SEARCH PAGE)
+    // =============================
+
+    // 🔥 คนไข้ที่มีนัด (ไม่ใช่ completed / cancelled)
+    getActivePatientsApi: async () => {
+      const token = localStorage.getItem("token")
+
+      const res = await fetchWithLoading(
+        `${API_BASE_URL}/appointment/with-active-appointments`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      const data = await res.json()
+
+      if (res.status === 401) {
+        localStorage.removeItem("token")
+        throw new Error("Unauthorized")
+      }
+
+      if (!res.ok) {
+        throw new Error(data.message || "Fetch patients failed")
+      }
+
+      return data.data
+    },
+
+    updateMedicalRecordApi: async (
+      record_id: number,
+      payload: {
+        symptoms: string
+        diagnosis: string
+        treatment_plan: string
+      }
+    ) => {
+      const token = localStorage.getItem("token")
+
+      const res = await fetchWithLoading(
+        `${API_BASE_URL}/appointment/medical-records/${record_id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      )
+
+      const data = await res.json()
+
+      if (res.status === 401) {
+        localStorage.removeItem("token")
+        throw new Error("Unauthorized")
+      }
+
+      if (!res.ok) {
+        throw new Error(data.message || "Update medical record failed")
+      }
+
+      return data
+    },
+    // ---------- STAFF: INCIDENT ----------
+    reportIncidentApi: async (payload: {
+      title: string
+      description: string
+      incident_date: string
+      incident_time: string
+    }) => {
+      const token = localStorage.getItem("token")
+      if (!token) throw new Error("No token found")
+
+      const res = await fetchWithLoading(`${API_BASE_URL}/incidents/report`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      })
+
+      const data = await res.json()
+
+      if (res.status === 401) {
+        localStorage.removeItem("token")
+        throw new Error("Unauthorized")
+      }
+
+      if (!res.ok) {
+        throw new Error(data.message || "ส่งรายงานเหตุการณ์ไม่สำเร็จ")
+      }
+
+      return data
+    },
+    /* ---------- OWNER: DASHBOARD ---------- */
+    getDashboardStatsApi: async () => {
+      const token = localStorage.getItem("token")
+      if (!token) throw new Error("No token found")
+
+      const res = await fetchWithLoading(`${API_BASE_URL}/owner/dashboard-stats`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const data = await res.json()
+
+      if (!res.ok || data.success === false) {
+        throw new Error(data.message || "Fetch dashboard stats failed")
+      }
+
+      return data
+    },
+
+    getAllIncidentsApi: async () => {
+      const token = localStorage.getItem("token")
+      if (!token) throw new Error("No token found")
+
+      const res = await fetchWithLoading(`${API_BASE_URL}/incidents/all`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const data = await res.json()
+
+      if (!res.ok || data.success === false) {
+        throw new Error(data.message || "Fetch incidents failed")
+      }
+
+      return data
+    },// 📝 สมัครคนไข้ walk-in
+    walkInRegisterApi: async (payload: {
+      first_name: string
+      last_name: string
+      phone_number: string
+      email: string
+      id_card_number: string
+      gender: string
+      birth_date: string
+    }) => {
+      const token = localStorage.getItem("token")
+
+      const res = await fetchWithLoading(`${API_BASE_URL}/auth/walk-in-register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      })
+
+      const data = await res.json()
+
+      if (res.status === 401) {
+        localStorage.removeItem("token")
+        throw new Error("Unauthorized")
+      }
+
+      if (!res.ok) {
+        throw new Error(data.message || "Register walk-in failed")
+      }
+
+      return data
+    },
+
+    // 📅 สร้างนัดหมาย walk-in
+    walkInAppointmentApi: async (payload: {
+      patient_id: number
+      appointment_date: string
+      start_time: string
+      symptoms: string
+      notes: string
+    }) => {
+      const token = localStorage.getItem("token")
+
+      const res = await fetchWithLoading(`${API_BASE_URL}/appointment/walk-in`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      })
+
+      const data = await res.json()
+
+      if (res.status === 401) {
+        localStorage.removeItem("token")
+        throw new Error("Unauthorized")
+      }
+
+      if (!res.ok) {
+        throw new Error(data.message || "Walk-in appointment failed")
+      }
+
+      return data
+    },
+    /* ---------- CHATBOT ---------- */
+
+    // 📩 ส่งข้อความ + รูป (FormData)
+    sendChatbotApi: async (payload: {
+      session_id: string
+      message: string
+      image?: File | null
+    }) => {
+      const token = localStorage.getItem("token")
+
+      const formData = new FormData()
+      formData.append("session_id", payload.session_id)
+      formData.append("message", payload.message)
+
+      if (payload.image) {
+        formData.append("image", payload.image)
+      }
+
+      const res = await fetch(`${API_BASE_URL}/ai/chat`, {
+        method: "POST",
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: formData,
+      })
+
+      const data = await res.json()
+
+      if (res.status === 401) {
+        localStorage.removeItem("token")
+        throw new Error("Unauthorized")
+      }
+
+      if (!res.ok) {
+        throw new Error(data.message || "Chatbot send failed")
+      }
+
+      return data // 🔥 มี reply กลับมา
+    },
+
+    getChatbotHistoryApi: async (session_id: string) => {
+      const token = localStorage.getItem("token")
+
+      const res = await fetch(
+        `${API_BASE_URL}/ai/chat/history/${session_id}`, // ถ้า backend ใช้ path param ก็โอเค
+        {
+          method: "GET",
+          headers: {
+            'Content-Type': 'application/json', // optional
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          // ❌ ไม่ต้องมี body ใน GET
+        }
+      )
+
+      const data = await res.json()
+
+      if (res.status === 401) {
+        localStorage.removeItem("token")
+        throw new Error("Unauthorized")
+      }
+
+      if (!res.ok) {
+        throw new Error(data.message || "Fetch history failed")
+      }
+
+      return data.data
     }
 
+
+  }
+}
+
+/* ---------- CHATBOT HOOK ---------- */
+export function useChatbotApi() {
+  const { sendChatbotApi, getChatbotHistoryApi } = useApi()
+
+  return {
+    sendMessage: sendChatbotApi,
+    getHistory: getChatbotHistoryApi,
   }
 }

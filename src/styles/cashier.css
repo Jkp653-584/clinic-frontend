@@ -43,26 +43,114 @@
   margin-top: 16px;
 }
 
-.appointment-filter-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap; /* สำคัญมาก */
-  gap: 12px;
+/* wrapper */
+.staff-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px;
+  font-family: "Inter", sans-serif;
+  color: #111827;
+  background-color: #f9fafb;
 }
 
-/* ซ้าย = status tabs */
-.appointment-filter-left {
-  display: flex;
-  align-items: center;
-  gap: 0px;
-  flex-wrap: nowrap;   /* 👈 ตัวสำคัญ ห้ามแตก */
+/* card container */
+.staff-page .card {
+  background-color: #ffffff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  display: grid;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
-/* ขวา = date + search */
-.appointment-filter-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+/* labels */
+.staff-page label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 14px;
+  color: #374151;
+}
+
+/* input ปกติ */
+.staff-page input,
+.staff-page select,
+.staff-page textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: #ffffff;
+  color: #111827;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* input disabled (แก้ให้ override ได้) */
+.staff-page input:disabled,
+.staff-page select:disabled,
+.staff-page textarea:disabled {
+  background-color: #f3f4f6; /* สี background อ่อนกว่า */
+  border-color: #d1d5db;
+  color: #9ca3af; /* สีข้อความจางลง */
+  cursor: not-allowed;
+}
+
+.staff-page input:focus,
+.staff-page select:focus,
+.staff-page textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.2);
+}
+
+/* textarea height */
+.staff-page textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* button */
+.staff-page .primary-btn {
+  padding: 12px 20px;
+  background-color: #6366f1;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.staff-page .primary-btn:hover {
+  background-color: #4f46e5;
+}
+
+.staff-page .primary-btn:disabled {
+  background-color: #a5b4fc;
+  cursor: not-allowed;
+}
+
+/* spacing */
+.staff-page h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.staff-page .mt-4 { margin-top: 16px; }
+.staff-page .mt-16 { margin-top: 24px; }
+
+/* grid layout for type/other */
+.staff-page .grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 640px) {
+  .staff-page .grid {
+    grid-template-columns: 1fr;
+  }
 }

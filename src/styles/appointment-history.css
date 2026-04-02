@@ -158,6 +158,32 @@
   color: white;
 }
 
+/* 🔥 FIX FILTER BAR (ให้เหมือนหน้าอื่น) */
+
+.appointment-filter-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 8px;              /* ✅ แก้ gap */
+  margin-bottom: 16px;   /* ✅ แก้ spacing */
+}
+
+.appointment-filter-left {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;              /* ✅ ให้ปุ่มมีช่องว่างเหมือนกัน */
+}
+.appointment-filter-left input[type="date"] {
+  width: auto;
+}
+
+.appointment-filter-right {
+  display: flex;
+  align-items: center;
+}
+
 /* 📱 MOBILE */
 
 @media (max-width: 768px) {

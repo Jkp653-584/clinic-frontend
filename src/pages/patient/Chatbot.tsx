@@ -1,99 +1,133 @@
 import { useState, useRef, useEffect } from "react"
+import { useChatbotApi } from "../../api"
+import uploadIcon from "../../assets/image-.png"
 
 type Message = {
   role: "user" | "bot"
   content: string
+  image?: string
 }
 
 export default function Chatbot() {
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "bot",
-      content: "มีอะไรจะสอบถามไหมครับ ?"
-    }
-  ])
+  const { sendMessage: sendApi, getHistory } = useChatbotApi()
 
+  const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
+  const [image, setImage] = useState<File | null>(null)
 
   const chatRef = useRef<HTMLDivElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  /* session */
+  const [sessionId] = useState(() => {
+    const existing = localStorage.getItem("chat_session")
+    if (existing) return existing
+
+    const newSession = crypto.randomUUID()
+    localStorage.setItem("chat_session", newSession)
+    return newSession
+  })
 
   /* auto scroll */
-
   useEffect(() => {
     if (chatRef.current) {
-      chatRef.current.scrollTop = chatRef.current.scrollHeight
+      chatRef.current.scrollTo({
+        top: chatRef.current.scrollHeight,
+        behavior: "smooth"
+      })
     }
   }, [messages])
 
-  /* ---------- API CALL ---------- */
+  /* load history */
+  useEffect(() => {
+    fetchHistory()
+  }, [])
 
-  async function askBot(question: string) {
+  async function fetchHistory() {
+    try {
+      const data = await getHistory(sessionId)
 
-    /* ตรงนี้เปลี่ยนเป็น API จริงทีหลัง */
+      if (!data || data.length === 0) {
+        setMessages(prev => [
+          ...prev,
+          { role: "bot", content: "มีอะไรจะสอบถามไหมครับ ?" }
+        ])
+        return
+      }
 
-    const response = await fetch("/api/chatbot", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        message: question
+      const mapped: Message[] = data.map((item: any) => ({
+        role: item.sender === "patient" ? "user" : "bot",
+        content: item.message,
+        image: item.image_url || undefined
+      }))
+
+      // 🔥 merge history ใหม่โดยไม่ลบข้อความที่เพิ่งส่งไป
+      setMessages(prev => {
+        // เอาเฉพาะ history ใหม่ที่ยังไม่มีใน state
+        const existingContents = new Set(prev.map(m => m.content))
+        const newMessages = mapped.filter(m => !existingContents.has(m.content))
+        return [...prev, ...newMessages]
       })
-    })
 
-    if (!response.ok) {
-      throw new Error("API error")
+    } catch (err) {
+      console.error(err)
     }
-
-    const data = await response.json()
-
-    return data.reply
   }
 
-  /* ---------- SEND MESSAGE ---------- */
-
   async function sendMessage() {
+    if ((!input.trim() && !image) || loading) return
 
-    if (!input.trim() || loading) return
+    let previewUrl: string | undefined
+    if (image) previewUrl = URL.createObjectURL(image)
 
-    const userMessage: Message = {
-      role: "user",
-      content: input
-    }
+    // 🔹 show user message ทันที
+    setMessages(prev => [
+      ...prev,
+      { role: "user", content: input, image: previewUrl }
+    ])
 
-    setMessages(prev => [...prev, userMessage])
+    const currentInput = input
     setInput("")
     setLoading(true)
 
     try {
+      // 🔹 ส่งข้อความไป API
+      const response = await sendApi({
+        session_id: sessionId,
+        message: currentInput,
+        image: image || undefined
+      })
 
-      const reply = await askBot(input)
-
-      const botMessage: Message = {
-        role: "bot",
-        content: reply
+      // 🔹 เอา reply จาก API มาโชว์ทันที
+      if (response?.success && response?.reply) {
+        setMessages(prev => [
+          ...prev,
+          {
+            role: "bot",
+            content: response.reply,
+            image: response.has_image ? "url_image_if_any" : undefined
+          }
+        ])
       }
 
-      setMessages(prev => [...prev, botMessage])
+      // 🔹 เรียก fetchHistory() ทุกครั้งหลังส่ง เพื่อให้ source of truth update
+      fetchHistory().catch(err => console.error(err))
 
     } catch (err) {
-
+      console.error(err)
       setMessages(prev => [
         ...prev,
-        {
-          role: "bot",
-          content: "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง"
-        }
+        { role: "bot", content: "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง" }
       ])
-
     } finally {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+      setImage(null)
+      if (fileRef.current) fileRef.current.value = ""
       setLoading(false)
     }
   }
-
-  /* enter send */
 
   function handleKey(e: React.KeyboardEvent) {
     if (e.key === "Enter") {
@@ -102,7 +136,6 @@ export default function Chatbot() {
   }
 
   return (
-
     <div className="chatbot-page">
 
       <h1>แชทสอบถามอาการต่างๆ</h1>
@@ -116,33 +149,38 @@ export default function Chatbot() {
         <div className="chat-messages" ref={chatRef}>
 
           {messages.map((m, i) => (
+            <div key={i} className={`message ${m.role}`}>
 
-            <div
-              key={i}
-              className={`message ${m.role}`}
-            >
-
-              {m.role === "bot" && (
-                <div className="avatar"/>
-              )}
+              {m.role === "bot" && <div className="avatar bot-avatar" />}
 
               <div className="bubble">
-                {m.content}
+
+                {/* 🔥 รูปขึ้นก่อน */}
+                {m.image && (
+                  <img src={m.image} className="chat-image" />
+                )}
+
+                {/* 🔥 เว้นบรรทัดอัตโนมัติ */}
+                {m.image && m.content && <div style={{ height: 6 }} />}
+
+                <div>
+                  {m.content}
+                </div>
+
               </div>
 
-              {m.role === "user" && (
-                <div className="avatar"/>
-              )}
+              {m.role === "user" && <div className="avatar user-avatar" />}
 
             </div>
-
           ))}
 
           {loading && (
             <div className="message bot">
-              <div className="avatar"/>
-              <div className="bubble loading">
-                กำลังตอบ...
+              <div className="avatar bot-avatar" />
+              <div className="bubble typing">
+                <span></span>
+                <span></span>
+                <span></span>
               </div>
             </div>
           )}
@@ -150,28 +188,51 @@ export default function Chatbot() {
         </div>
 
         <div className="chat-input">
+          {/* 🔹 row ของ input + import + send */}
+          <div className="input-row">
+            <input
+              type="text"
+              placeholder="ฉันมีอาการ...."
+              value={input}
+              disabled={loading}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKey}
+            />
 
-          <input
-            type="text"
-            placeholder="ฉันมีอาการ...."
-            value={input}
-            disabled={loading}
-            onChange={(e)=>setInput(e.target.value)}
-            onKeyDown={handleKey}
-          />
+            {!image && (
+              <label className="upload-btn">
+                <img src={uploadIcon} className="upload-icon" />
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setImage(e.target.files?.[0] || null)}
+                />
+              </label>
+            )}
 
-          <button
-            onClick={sendMessage}
-            disabled={loading}
-          >
-            ส่ง
-          </button>
+            <button className="send-btn" onClick={sendMessage} disabled={loading}>
+              ส่ง
+            </button>
+          </div>
 
+          {/* 🔹 row ของ file preview */}
+          {image && (
+            <div className="file-preview">
+              <span>{image.name}</span>
+              <button
+                onClick={() => {
+                  setImage(null);
+                  if (fileRef.current) fileRef.current.value = "";
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          )}
         </div>
 
       </div>
-
     </div>
-
   )
 }

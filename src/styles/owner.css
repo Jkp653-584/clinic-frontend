@@ -221,6 +221,7 @@
   display: flex;
   flex-direction: column;
 }
+
 .schedule-section {
   gap: 8px;
   display: flex;
@@ -252,4 +253,47 @@
   background: white;
   padding: 10px;
   border-radius: 6px;
+}
+.patients-page .patients-list-item-wrapper {
+  border: 1px solid #eee;
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.patients-page .patients-list-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-weight: 500;
+  background: #f7f7f7;
+  transition: background 0.2s;
+}
+
+.patients-page .patients-list-item:hover {
+  background: #e6f0ff;
+}
+
+.patients-page .expand-box {
+  padding: 8px 12px;
+  border-left: 3px solid #007bff;
+  background: #f9f9f9;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.patients-page .medical-records-container .medical-record {
+  background: #fff;
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.patients-page .medical-records-container h4 {
+  margin-top: 10px;
+  margin-bottom: 6px;
 }
