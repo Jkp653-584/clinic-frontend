@@ -336,16 +336,23 @@ export function useApi() {
     updatePasswordApi: async (payload: {
       email: string
       new_password: string
-      old_password?: string // 🔥 optional
+      old_password?: string
     }) => {
-      const token = localStorage.getItem("token")
+      // 🔥 ถ้า old_password มีค่า → change password, ต้องมี token
+      const isChange = !!payload.old_password
+      const token = isChange ? localStorage.getItem("token") : null
+
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      }
+
+      if (isChange && token) {
+        headers["Authorization"] = `Bearer ${token}`
+      }
 
       const res = await fetchWithLoading(`${API_BASE_URL}/auth/update-password`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
         body: JSON.stringify(payload),
       })
 
@@ -357,7 +364,7 @@ export function useApi() {
       }
 
       if (!res.ok) {
-        throw new Error(data.message || "Change password failed")
+        throw new Error(data.message || "Update password failed")
       }
 
       return data
