@@ -7,10 +7,6 @@ export default function Settings({ user }: { user: User }) {
   const { showToast } = useToast()
   const { updatePasswordApi } = useApi()
 
-  const [isEditing, setIsEditing] = useState(false)
-
-  const [notifyType, setNotifyType] = useState("email")
-
   const [oldPassword, setOldPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
 
