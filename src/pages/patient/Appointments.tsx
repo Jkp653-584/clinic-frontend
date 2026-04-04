@@ -18,6 +18,7 @@ export default function Appointments() {
   const { showToast } = useToast()
 
   const today = new Date()
+  const todayStr = today.toISOString().slice(0, 10)
 
   const [currentMonth, setCurrentMonth] = useState(
     today.toISOString().slice(0, 7)
@@ -35,23 +36,16 @@ export default function Appointments() {
   const [note, setNote] = useState("")
 
   // =====================
-  // LOAD CALENDAR
-  // =====================
   useEffect(() => {
     fetchCalendar()
   }, [currentMonth])
 
-  // =====================
-  // LOAD TIME WHEN SELECT DATE
-  // =====================
   useEffect(() => {
     if (selectedDate) {
       fetchTimeSlots(selectedDate)
     }
   }, [selectedDate])
 
-  // =====================
-  // FETCH CALENDAR
   // =====================
   const fetchCalendar = async () => {
     try {
@@ -82,7 +76,6 @@ export default function Appointments() {
       setCalendarDays(days)
       setHasAvailableDay(hasAvailable)
 
-      // reset เมื่อเปลี่ยนเดือน
       setSelectedDate(null)
       setSelectedTime(null)
       setTimeSlots([])
@@ -92,8 +85,6 @@ export default function Appointments() {
     }
   }
 
-  // =====================
-  // FETCH TIMESLOTS
   // =====================
   const fetchTimeSlots = async (date: string) => {
     try {
@@ -112,37 +103,58 @@ export default function Appointments() {
   }
 
   // =====================
-  // CHANGE MONTH
-  // =====================
   const handlePrevMonth = () => {
     const date = new Date(currentMonth + "-01")
     date.setMonth(date.getMonth() - 1)
-
     setCurrentMonth(date.toISOString().slice(0, 7))
   }
 
   const handleNextMonth = () => {
     const date = new Date(currentMonth + "-01")
     date.setMonth(date.getMonth() + 1)
-
     setCurrentMonth(date.toISOString().slice(0, 7))
   }
 
   const formatMonth = (monthStr: string) => {
     const date = new Date(monthStr + "-01")
-
     return date.toLocaleDateString("th-TH", {
       month: "long",
       year: "numeric",
     })
   }
 
-  // =====================
-  // SUBMIT
+  const MAX_DAYS = 14
+
+  const canGoPrev = () => {
+    const [year, month] = currentMonth.split("-").map(Number)
+
+    const current = new Date(year, month - 1, 1) // เดือนที่กำลังอยู่
+    const today = new Date()
+    const min = new Date(today.getFullYear(), today.getMonth(), 1) // เดือนปัจจุบัน (วันแรก)
+
+    return current.getTime() > min.getTime()
+  }
+  const canGoNext = () => {
+    const today = new Date()
+    const maxDate = new Date()
+    maxDate.setDate(today.getDate() + MAX_DAYS)
+
+    const nextMonth = new Date(currentMonth + "-01")
+    nextMonth.setMonth(nextMonth.getMonth() + 1)
+
+    return nextMonth <= maxDate
+  }
+
   // =====================
   const handleSubmit = async () => {
     if (!selectedDate || !selectedTime) {
       showToast("error", "กรุณาเลือกวันและเวลา")
+      return
+    }
+
+    // 🔥 กันเคสวันเดียวกัน
+    if (selectedDate === todayStr) {
+      showToast("error", "การนัดหมายออนไลน์ต้องล่วงหน้าอย่างน้อย 1 วัน")
       return
     }
 
@@ -168,33 +180,26 @@ export default function Appointments() {
     }
   }
 
+  const isTodaySelected = selectedDate === todayStr
+
   return (
     <div className="appointment-page">
 
       <h1>นัดหมายเข้ารับการรักษา</h1>
       <p>เลือกวันและเวลาที่สะดวก ระบบจะแสดงเฉพาะช่วงเวลาที่แพทย์ว่าง</p>
 
-      {/* ===================== */}
-      {/* MONTH HEADER */}
-      {/* ===================== */}
       <div className="calendar-header">
-        <button className="nav-btn" onClick={handlePrevMonth}>‹</button>
+        <button className="nav-btn" onClick={handlePrevMonth} disabled={!canGoPrev()}>‹</button>
         <div className="month-label">{formatMonth(currentMonth)}</div>
-        <button className="nav-btn" onClick={handleNextMonth}>›</button>
+        <button className="nav-btn" onClick={handleNextMonth} disabled={!canGoNext()}>›</button>
       </div>
 
-      {/* ===================== */}
-      {/* STEP 1: CALENDAR */}
-      {/* ===================== */}
       {!hasAvailableDay ? (
-
         <div className="no-available">
           ❌ ไม่มีคิวว่างในเดือนนี้<br />
           กรุณาเลือกเดือนอื่น
         </div>
-
       ) : (
-
         <div className="calendar-grid">
           {calendarDays.map(day => (
             <button
@@ -212,40 +217,46 @@ export default function Appointments() {
             </button>
           ))}
         </div>
-
       )}
 
-      {/* ===================== */}
-      {/* STEP 2: TIME */}
-      {/* ===================== */}
       {selectedDate && (
-
         <>
           <h3>เลือกช่วงเวลา</h3>
 
           <div className="time-grid">
-            {timeSlots.map(slot => (
-              <button
-                key={slot.time}
-                disabled={slot.disabled}
-                className={`time-slot 
-                  ${selectedTime === slot.time ? "active" : ""}
-                `}
-                onClick={() => setSelectedTime(slot.time)}
-              >
-                {slot.time}
-              </button>
-            ))}
-          </div>
-        </>
+            {timeSlots.map(slot => {
+              const isDisabled = slot.disabled
 
+              return (
+                <button
+                  key={slot.time}
+                  disabled={isDisabled}
+                  className={`time-slot 
+                    ${selectedTime === slot.time ? "active" : ""}
+                    ${isDisabled ? "disabled" : ""}
+                  `}
+                  onClick={() => {
+                    if (isTodaySelected) return
+                    setSelectedTime(slot.time)
+                  }}
+                >
+                  {slot.time}
+                </button>
+              )
+            })}
+          </div>
+          {/* 🔥 แจ้งเตือน */}
+          {isTodaySelected && (
+            <div className="warning-box" style={{ marginTop: "25px" }}>
+              ⚠️ การแสดงเวลานี้มีไว้เพื่อให้ทราบช่วงเวลาที่แพทย์ว่างเท่านั้น<br />
+              หากต้องการนัดหมายออนไลน์ กรุณานัดล่วงหน้าอย่างน้อย 1 วัน<br />
+              หรือสามารถเข้ารับบริการแบบ walk-in ได้
+            </div>
+          )}
+        </>
       )}
 
-      {/* ===================== */}
-      {/* STEP 3: FORM */}
-      {/* ===================== */}
       {selectedTime && (
-
         <>
           <div className="form-group">
             <label>อาการเบื้องต้น</label>
@@ -269,7 +280,6 @@ export default function Appointments() {
             ยืนยันการนัดหมาย
           </button>
         </>
-
       )}
 
     </div>

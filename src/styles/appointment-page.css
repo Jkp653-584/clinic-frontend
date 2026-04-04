@@ -27,8 +27,13 @@
   font-size: 20px;
   transition: all 0.2s ease;
 }
+.calendar-header .nav-btn:disabled {
+  background: #eee;
+  color: #aaa;
+  cursor: not-allowed;
+}
 
-.calendar-header .nav-btn:hover {
+.calendar-header .nav-btn:hover:not(:disabled) {
   background: #e2e8f0;
   transform: scale(1.05);
 }

@@ -8,9 +8,22 @@ export default function Incident() {
 
   const [type, setType] = useState<ReportType>("other")
   const [other, setOther] = useState("")
-  const [datetime, setDatetime] = useState(
-    new Date().toISOString().slice(0, 16)
-  )
+
+  const getLocalDateTime = () => {
+    const now = new Date()
+
+    const pad = (n: number) => String(n).padStart(2, "0")
+
+    const year = now.getFullYear()
+    const month = pad(now.getMonth() + 1)
+    const day = pad(now.getDate())
+    const hours = pad(now.getHours())
+    const minutes = pad(now.getMinutes())
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`
+  }
+
+  const [datetime, setDatetime] = useState(getLocalDateTime())
   const [detail, setDetail] = useState("")
   const [loading, setLoading] = useState(false)
 
@@ -30,10 +43,10 @@ export default function Incident() {
       type === "other"
         ? other
         : type === "complaint"
-        ? "ผู้ป่วยร้องเรียน"
-        : type === "payment"
-        ? "ปัญหาชำระเงิน"
-        : "ระบบขัดข้อง"
+          ? "ผู้ป่วยร้องเรียน"
+          : type === "payment"
+            ? "ปัญหาชำระเงิน"
+            : "ระบบขัดข้อง"
 
     // แปลง datetime
     const dateObj = new Date(datetime)
@@ -61,7 +74,7 @@ export default function Incident() {
       // reset form
       setType("other")
       setOther("")
-      setDatetime(new Date().toISOString().slice(0, 16))
+      setDatetime(getLocalDateTime())
       setDetail("")
     } catch (err: any) {
       alert(err.message || "เกิดข้อผิดพลาด")
