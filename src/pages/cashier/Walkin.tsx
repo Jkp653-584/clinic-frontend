@@ -48,9 +48,6 @@ export default function WalkIn() {
         id_card_number: "",
     })
 
-    // =====================
-    // SEARCH
-    // =====================
     const handleSearch = async () => {
         try {
             const data = await getPatientsApi()
@@ -70,18 +67,12 @@ export default function WalkIn() {
         }
     }
 
-    // =====================
-    // REGISTER
-    // =====================
     const handleRegister = async () => {
         try {
-            console.log("FORM:", form)
             const res = await walkInRegisterApi(form)
 
-            // ✅ ใส่ patientId อัตโนมัติ
             setPatientId(res.patient_id)
 
-            // ✅ เคลียร์ฟอร์มสมัคร
             setForm({
                 first_name: "",
                 last_name: "",
@@ -102,35 +93,58 @@ export default function WalkIn() {
     // APPOINTMENT
     // =====================
     const today = new Date()
-    const [currentMonth, setCurrentMonth] = useState(today.toISOString().slice(0, 7))
+
+    const [currentMonth, setCurrentMonth] = useState(
+        today.toISOString().slice(0, 7)
+    )
+
     const [selectedDate, setSelectedDate] = useState<string | null>(null)
     const [selectedTime, setSelectedTime] = useState<string | null>(null)
+
     const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([])
     const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
+
     const [hasAvailableDay, setHasAvailableDay] = useState(true)
+
     const [symptom, setSymptom] = useState("")
     const [note, setNote] = useState("")
 
-    useEffect(() => { fetchCalendar() }, [currentMonth])
-    useEffect(() => { if (selectedDate) fetchTimeSlots(selectedDate) }, [selectedDate])
+    useEffect(() => {
+        fetchCalendar()
+    }, [currentMonth])
+
+    useEffect(() => {
+        if (selectedDate) fetchTimeSlots(selectedDate)
+    }, [selectedDate])
 
     const fetchCalendar = async () => {
         const data = await getMonthlySlotsApi(currentMonth)
+
         const days: CalendarDay[] = []
+
         const [year, month] = currentMonth.split("-").map(Number)
         const daysInMonth = new Date(year, month, 0).getDate()
+
         let hasAvailable = false
 
         for (let i = 1; i <= daysInMonth; i++) {
             const date = `${currentMonth}-${String(i).padStart(2, "0")}`
+
             const slots = data[date] || []
             const available = slots.some((s: any) => s.is_available)
+
             if (available) hasAvailable = true
-            days.push({ date, day: i, disabled: !available })
+
+            days.push({
+                date,
+                day: i,
+                disabled: !available,
+            })
         }
 
         setCalendarDays(days)
         setHasAvailableDay(hasAvailable)
+
         setSelectedDate(null)
         setSelectedTime(null)
         setTimeSlots([])
@@ -138,12 +152,44 @@ export default function WalkIn() {
 
     const fetchTimeSlots = async (date: string) => {
         const slots = await getAvailableSlotsApi(date)
-        setTimeSlots(slots.map((s: any) => ({
-            time: s.time,
-            disabled: !s.is_available || s.remaining_capacity <= 0,
-        })))
+
+        setTimeSlots(
+            slots.map((s: any) => ({
+                time: s.time,
+                disabled: !s.is_available || s.remaining_capacity <= 0,
+            }))
+        )
     }
 
+    // =====================
+    // 🔥 MONTH LOCK (เหมือน patient)
+    // =====================
+    const MAX_DAYS = 14
+
+    const canGoPrev = () => {
+        const [year, month] = currentMonth.split("-").map(Number)
+
+        const current = new Date(year, month - 1, 1)
+        const today = new Date()
+        const min = new Date(today.getFullYear(), today.getMonth(), 1)
+
+        return current.getTime() > min.getTime()
+    }
+
+    const canGoNext = () => {
+        const today = new Date()
+        const maxDate = new Date()
+        maxDate.setDate(today.getDate() + MAX_DAYS)
+
+        const nextMonth = new Date(currentMonth + "-01")
+        nextMonth.setMonth(nextMonth.getMonth() + 1)
+
+        return nextMonth <= maxDate
+    }
+
+    // =====================
+    // SUBMIT
+    // =====================
     const handleSubmit = async () => {
         if (!patientId) return showToast("error", "ใส่ patient id")
         if (!selectedDate || !selectedTime) return showToast("error", "เลือกวันเวลา")
@@ -158,7 +204,6 @@ export default function WalkIn() {
 
         showToast("success", "นัดหมายสำเร็จ 🎉")
 
-        // ✅ เคลียร์ selection หลังนัดสำเร็จ
         setSelectedDate(null)
         setSelectedTime(null)
         setSymptom("")
@@ -258,15 +303,19 @@ export default function WalkIn() {
                             onChange={(e) => setPatientId(Number(e.target.value))}
                         />
                     </div>
-                    {/* ===================== */}
-                    {/* MONTH HEADER */}
-                    {/* ===================== */}
+
                     <div className="calendar-header">
-                        <button className="nav-btn" onClick={() => {
-                            const date = new Date(currentMonth + "-01");
-                            date.setMonth(date.getMonth() - 1);
-                            setCurrentMonth(date.toISOString().slice(0, 7));
-                        }}>‹</button>
+                        <button
+                            className="nav-btn"
+                            onClick={() => {
+                                const date = new Date(currentMonth + "-01")
+                                date.setMonth(date.getMonth() - 1)
+                                setCurrentMonth(date.toISOString().slice(0, 7))
+                            }}
+                            disabled={!canGoPrev()}
+                        >
+                            ‹
+                        </button>
 
                         <div className="month-label">
                             {new Date(currentMonth + "-01").toLocaleDateString("th-TH", {
@@ -275,32 +324,31 @@ export default function WalkIn() {
                             })}
                         </div>
 
-                        <button className="nav-btn" onClick={() => {
-                            const date = new Date(currentMonth + "-01");
-                            date.setMonth(date.getMonth() + 1);
-                            setCurrentMonth(date.toISOString().slice(0, 7));
-                        }}>›</button>
+                        <button
+                            className="nav-btn"
+                            onClick={() => {
+                                const date = new Date(currentMonth + "-01")
+                                date.setMonth(date.getMonth() + 1)
+                                setCurrentMonth(date.toISOString().slice(0, 7))
+                            }}
+                            disabled={!canGoNext()}
+                        >
+                            ›
+                        </button>
                     </div>
-                    {/* ===================== */}
-                    {/* STEP 1: CALENDAR */}
-                    {/* ===================== */}
-                    {!hasAvailableDay ? (
 
+                    {!hasAvailableDay ? (
                         <div className="no-available">
                             ❌ ไม่มีคิวว่างในเดือนนี้<br />
                             กรุณาเลือกเดือนอื่น
                         </div>
-
                     ) : (
-
                         <div className="calendar-grid">
                             {calendarDays.map(day => (
                                 <button
                                     key={day.date}
                                     disabled={day.disabled}
-                                    className={`calendar-day 
-                                    ${selectedDate === day.date ? "active" : ""}
-                                    `}
+                                    className={`calendar-day ${selectedDate === day.date ? "active" : ""}`}
                                     onClick={() => {
                                         setSelectedDate(day.date)
                                         setSelectedTime(null)
@@ -310,7 +358,6 @@ export default function WalkIn() {
                                 </button>
                             ))}
                         </div>
-
                     )}
 
                     {selectedDate && (
@@ -346,9 +393,7 @@ export default function WalkIn() {
                             </button>
                         </div>
                     )}
-
                 </div>
-
             </div>
         </div>
     )
