@@ -123,7 +123,7 @@ export default function Appointments() {
     })
   }
 
-  const MAX_DAYS = 14
+  const MAX_DAYS = 30
 
   const canGoPrev = () => {
     const [year, month] = currentMonth.split("-").map(Number)

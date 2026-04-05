@@ -164,7 +164,7 @@ export default function WalkIn() {
     // =====================
     // 🔥 MONTH LOCK (เหมือน patient)
     // =====================
-    const MAX_DAYS = 14
+    const MAX_DAYS = 30
 
     const canGoPrev = () => {
         const [year, month] = currentMonth.split("-").map(Number)
